@@ -1,11 +1,14 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { App } from "@/App";
+import { useAuthStore } from "@/stores/auth";
 import "@/index.css";
+
+// Initialize auth before rendering — subscribes to Supabase session changes
+useAuthStore.getState().initialize();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <div>
-      <h1>Memogenesis</h1>
-    </div>
+    <App />
   </StrictMode>,
 );
