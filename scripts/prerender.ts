@@ -99,16 +99,21 @@ function buildHtml(page: PageConfig): string {
     <meta name="description" content="${page.description}" />
     <link rel="canonical" href="${canonical}" />
 
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
     <!-- Open Graph -->
     <meta property="og:title" content="${page.title}" />
     <meta property="og:description" content="${page.description}" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="${canonical}" />
+    <meta property="og:image" content="${BASE_URL}/og-image.png" />
 
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${page.title}" />
     <meta name="twitter:description" content="${page.description}" />
+    <meta name="twitter:image" content="${BASE_URL}/og-image.png" />
 
     ${jsonLd}
   </head>

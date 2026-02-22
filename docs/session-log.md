@@ -26,7 +26,7 @@
 - Vite build: succeeds (prebuild + build pipeline)
 - Bundle size: 697 KB (single chunk, code splitting deferred to Phase 2)
 
-### Next session tasks (Phase 2)
+### Next session tasks (Phase 2 — moved to backlog)
 1. Card generation form + API integration
 2. Card review/edit UI
 3. Code splitting with lazy route imports
@@ -39,6 +39,21 @@
 - **Named export enforcement**: Changed `AuthGuard` from `export default` to named export, matching the convention that only route page components use default exports. Updated the import in `App.tsx`.
 - **Prerender redirect fix**: Replaced broken inline `<script>` in prerender output. Old logic was a no-op or infinite redirect loop. New logic redirects `/pricing.html` → `/pricing`, letting wrangler's SPA fallback handle clean URLs.
 - **Auth store audit**: Verified `supabase.auth.getSession()` usage, `product_source` injection, and no localStorage token storage. No changes needed.
+
+### Quality gates
+- TypeScript strict: passing (0 errors)
+- ESLint: clean (0 warnings)
+- Vitest: 8/8 tests passing
+- Vite build: succeeds (prebuild + build pipeline)
+
+## Session 3 — 2026-02-22 — Logo Integration (Favicon, Header, OG Image)
+
+### What was done
+- **Favicon**: Replaced broken `/favicon.svg` reference in `index.html` with `/logo.svg` (SVG primary) + `/favicon.png` (32x32 PNG fallback). Added `og:image` meta tag.
+- **Header logo**: Added `<img src="/logo.svg">` (h-7 w-7) to header branding in `MarketingLayout.tsx` and `AppLayout.tsx` (3 locations). Converted mobile header `<span>` to `<Link to="/">` for consistency.
+- **OG image**: Created `scripts/generate-assets.ts` using `sharp` to produce `public/og-image.png` (1200x630, logo + title + tagline on white canvas) and `public/favicon.png` (32x32).
+- **Prerender SEO**: Updated `scripts/prerender.ts` with favicon links, `og:image`, `twitter:image`, and upgraded `twitter:card` from `summary` to `summary_large_image`.
+- **Dependency**: Added `sharp` as devDependency for asset generation.
 
 ### Quality gates
 - TypeScript strict: passing (0 errors)

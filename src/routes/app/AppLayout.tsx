@@ -102,7 +102,8 @@ export default function AppLayout() {
       {/* Desktop sidebar */}
       <aside className="hidden w-64 flex-col border-r bg-background md:flex">
         <div className="flex h-16 items-center px-6">
-          <Link to="/" className="text-lg font-bold tracking-tight">
+          <Link to="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
+            <img src="/logo.svg" alt="Memogenesis" className="h-7 w-7" />
             Memogenesis
           </Link>
         </div>
@@ -128,7 +129,8 @@ export default function AppLayout() {
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0">
               <div className="flex h-16 items-center px-6">
-                <SheetTitle className="text-lg font-bold tracking-tight">
+                <SheetTitle className="flex items-center gap-2 text-lg font-bold tracking-tight">
+                  <img src="/logo.svg" alt="Memogenesis" className="h-7 w-7" />
                   Memogenesis
                 </SheetTitle>
               </div>
@@ -145,7 +147,10 @@ export default function AppLayout() {
               </div>
             </SheetContent>
           </Sheet>
-          <span className="text-lg font-bold">Memogenesis</span>
+          <Link to="/" className="flex items-center gap-2 text-lg font-bold">
+            <img src="/logo.svg" alt="Memogenesis" className="h-7 w-7" />
+            Memogenesis
+          </Link>
         </header>
 
         <main className="flex-1 overflow-y-auto p-6">

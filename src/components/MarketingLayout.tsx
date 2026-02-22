@@ -22,7 +22,8 @@ export function MarketingLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link to="/" className="text-xl font-bold tracking-tight">
+          <Link to="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
+            <img src="/logo.svg" alt="Memogenesis" className="h-7 w-7" />
             Memogenesis
           </Link>
 
