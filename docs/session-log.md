@@ -60,3 +60,21 @@
 - ESLint: clean (0 warnings)
 - Vitest: 8/8 tests passing
 - Vite build: succeeds (prebuild + build pipeline)
+
+## Session 4 — 2026-02-22 — Favicon Refinement (Cropped Icon + Lineart)
+
+### What was done
+- **Cropped icon** (`3680ce9`): Created `public/logo-icon.svg` — viewBox-cropped version of the full logo for icon use. Updated `generate-assets.ts` to use dark charcoal background (#1a1a1a) with inverted (light) icon for both favicon and OG image. Added rounded corners (4px radius) to favicon via SVG mask compositing.
+- **Lineart favicon** (`5abdda1`): Switched favicon source from `logo-icon.svg` to new `public/logo-lineart-icon.svg` (cropped line-art variant). Introduced `FAVICON_ICON_PATH` constant in `generate-assets.ts` to decouple favicon and OG image sources — OG image still uses `ICON_PATH` (original `logo-icon.svg`).
+- **HTML updates**: Updated SVG favicon `href` in both `index.html` and `scripts/prerender.ts` to reference `/logo-lineart-icon.svg`.
+- **New assets**: Added `public/logo-lineart.svg` (full lineart logo) and `public/logo-lineart-icon.svg` (cropped lineart icon).
+
+### Architecture decisions
+- **Separate icon paths**: `ICON_PATH` (OG image) and `FAVICON_ICON_PATH` (favicon) are independent constants, allowing each asset pipeline to evolve separately without side effects.
+- **Favicon cascade**: HTML declares SVG favicon first (modern browsers), PNG fallback second (legacy). Both derive from the lineart source.
+
+### Quality gates
+- TypeScript strict: passing (0 errors)
+- ESLint: clean (0 warnings)
+- Vitest: 8/8 tests passing
+- Vite build: succeeds (prebuild + build pipeline)
