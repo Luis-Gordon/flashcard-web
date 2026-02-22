@@ -99,7 +99,7 @@ function buildHtml(page: PageConfig): string {
     <meta name="description" content="${page.description}" />
     <link rel="canonical" href="${canonical}" />
 
-    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="icon" type="image/svg+xml" href="/logo-icon.svg" />
     <link rel="icon" type="image/png" href="/favicon.png" />
 
     <!-- Open Graph -->
