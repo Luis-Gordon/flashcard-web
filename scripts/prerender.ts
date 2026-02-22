@@ -118,11 +118,9 @@ function buildHtml(page: PageConfig): string {
       <p>Memogenesis requires JavaScript for the full experience. The content above is a static preview.</p>
     </noscript>
     <script>
-      // Bootstrap into SPA for JS-enabled visitors
-      if (window.location.pathname !== '${page.route}') {
-        // Already at the right path — SPA will hydrate from index.html
-      } else {
-        window.location.replace('${page.route}');
+      // Redirect .html URLs to clean paths (SPA handles them via wrangler)
+      if (window.location.pathname.endsWith('.html')) {
+        window.location.replace(window.location.pathname.replace('.html', ''));
       }
     </script>
   </body>

@@ -64,6 +64,7 @@ export default function Signup() {
       .signUp(values.email, values.password);
 
     if (authError) {
+      console.error("Sign up error:", authError);
       // Supabase returns 422 for duplicate email in some configs
       if (
         authError.message.toLowerCase().includes("already registered") ||
@@ -74,7 +75,7 @@ export default function Signup() {
         );
         return;
       }
-      setError(authError.message);
+      setError("Something went wrong. Please try again.");
       return;
     }
 

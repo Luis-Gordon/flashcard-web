@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from "react-router";
 import { useAuthStore } from "@/stores/auth";
 
-export default function AuthGuard() {
+export function AuthGuard() {
   const { isLoading, session } = useAuthStore();
 
   if (isLoading) {

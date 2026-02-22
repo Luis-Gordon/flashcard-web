@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router";
 import { Toaster } from "@/components/ui/sonner";
-import AuthGuard from "@/components/AuthGuard";
+import { AuthGuard } from "@/components/AuthGuard";
 import Landing from "@/routes/Landing";
 import Pricing from "@/routes/Pricing";
 import Privacy from "@/routes/Privacy";
