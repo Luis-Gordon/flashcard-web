@@ -2,15 +2,15 @@
 React SPA for card generation, library management, .apkg export, and billing. Vite + TypeScript + Cloudflare Workers.
 
 ## Current Status
-- **Phase**: 0 — not started. See @../../PRD.md (Web App section) for phase definitions and acceptance criteria.
+- **Phase**: 1 — complete. Auth, marketing pages, legal pages, and app shell all implemented.
 - **Backend prerequisite**: Phase 5b billing migration must be deployed to production before web app launch.
+- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (8/8 tests), build succeeds.
 
 ## Next Session Tasks
-1. **Phase 1 setup** — Initialize Vite + React 19 + TypeScript with `@cloudflare/vite-plugin`
-2. **Configure tooling** — React Router 7 (library mode), Tailwind CSS v4, shadcn/ui, Vitest, ESLint
-3. **Auth flow** — Supabase Auth (shared project with backend), login/signup pages, auth guard on `/app/*`
-4. **Landing + legal pages** — Landing, pricing, privacy policy, terms of service (pre-rendered via `scripts/prerender.ts` or static HTML in `public/`)
-5. **Deploy** — `wrangler.jsonc` with `not_found_handling: "single-page-application"`, deploy to Cloudflare Workers
+1. **Phase 2: Card generation** — Generation form UI, API integration with `/cards/generate`, card review/edit
+2. **Code splitting** — Lazy route imports to reduce initial bundle size (currently 697 KB)
+3. **Staging deployment** — Deploy to Cloudflare Workers, test against backend staging API
+4. **End-to-end auth test** — Wire up real Supabase project credentials, verify login/signup flow
 
 ## CRITICAL Constraints
 - **NEVER** handle credit card details — Stripe Checkout (redirect) only
