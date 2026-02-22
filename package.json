@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
+    "prebuild": "tsx scripts/prerender.ts",
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "wrangler deploy",
