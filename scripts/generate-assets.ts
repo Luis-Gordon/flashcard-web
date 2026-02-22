@@ -13,6 +13,7 @@ import { resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const ICON_PATH = resolve(ROOT, "public/logo-icon.svg");
+const FAVICON_ICON_PATH = resolve(ROOT, "public/logo-lineart-icon.svg");
 const FAVICON_OUT = resolve(ROOT, "public/favicon.png");
 const OG_OUT = resolve(ROOT, "public/og-image.png");
 
@@ -23,7 +24,7 @@ async function generateFavicon() {
   const RADIUS = 4;
 
   // Render the icon and negate (dark paths → light paths)
-  const iconBuffer = await sharp(ICON_PATH)
+  const iconBuffer = await sharp(FAVICON_ICON_PATH)
     .resize(SIZE - 4, SIZE - 4, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .negate({ alpha: false })
     .png()
@@ -108,7 +109,7 @@ async function generateOgImage() {
 }
 
 async function main() {
-  console.log("Generating assets from public/logo-icon.svg...\n");
+  console.log("Generating assets (favicon from lineart, OG from logo-icon)...\n");
   await generateFavicon();
   await generateOgImage();
   console.log("\nDone.");
