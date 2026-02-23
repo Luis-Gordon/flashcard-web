@@ -24,17 +24,20 @@ Browser → Cloudflare Workers (static) → SPA
 | Auth | Supabase Auth | 2.x |
 | Validation | Zod | 4.x |
 | Forms | react-hook-form + @hookform/resolvers | 7.x / 5.x |
+| HTML Sanitization | DOMPurify | 3.x |
 | Testing | Vitest + @testing-library/react | 4.x / 16.x |
 | Hosting | Cloudflare Workers | — |
 
-## Directory Structure (Phase 1)
+## Directory Structure (Phase 2)
 
 ```
 src/
 ├── main.tsx                    # Entry — initializes auth, renders App
-├── App.tsx                     # Route definitions (BrowserRouter)
+├── App.tsx                     # Route definitions (BrowserRouter) + lazy loading
 ├── index.css                   # Tailwind v4 + shadcn CSS variables
 ├── vite-env.d.ts               # ImportMetaEnv types
+├── types/
+│   └── cards.ts                # Card, GenerateResponse, LibraryResponse types
 ├── routes/
 │   ├── Landing.tsx             # Marketing landing page
 │   ├── Pricing.tsx             # 3-tier pricing page
@@ -43,8 +46,8 @@ src/
 │   ├── Login.tsx               # Auth: login form
 │   ├── Signup.tsx              # Auth: signup form
 │   └── app/
-│       ├── AppLayout.tsx       # Sidebar nav + outlet
-│       ├── Generate.tsx        # Placeholder (Phase 2)
+│       ├── AppLayout.tsx       # Sidebar nav + usage display + outlet
+│       ├── Generate.tsx        # Form ↔ review toggle
 │       ├── Library.tsx         # Placeholder (Phase 3)
 │       ├── Export.tsx          # Placeholder (Phase 3)
 │       ├── Billing.tsx         # Placeholder (Phase 4)
@@ -52,16 +55,27 @@ src/
 ├── components/
 │   ├── AuthGuard.tsx           # Route guard: redirect if unauthenticated
 │   ├── MarketingLayout.tsx     # Header + footer for public pages
-│   └── ui/                     # shadcn/ui components (12 installed)
+│   ├── ui/                     # shadcn/ui components (22 installed)
+│   ├── cards/
+│   │   ├── GenerateForm.tsx    # Domain/style/difficulty form + content textarea
+│   │   ├── CardReview.tsx      # Card list with select/edit/delete + quality filter
+│   │   └── CardEditor.tsx      # Inline card editor (front/back/tags)
+│   └── billing/
+│       └── UpgradeModal.tsx    # Usage exceeded → tier comparison dialog
 ├── lib/
 │   ├── api.ts                  # Backend API client (fetch + auth + product_source)
 │   ├── supabase.ts             # Supabase browser client (singleton)
 │   ├── pricing.ts              # Pricing tier constants
 │   ├── utils.ts                # cn() utility (shadcn)
-│   └── validation/
-│       └── auth.ts             # Zod schemas: loginSchema, signupSchema
+│   ├── validation/
+│   │   ├── auth.ts             # Zod schemas: loginSchema, signupSchema
+│   │   └── cards.ts            # generateFormSchema, CARD_DOMAINS
+│   └── hooks/
+│       ├── useCards.ts         # Selectors on card store (generation, actions, library)
+│       └── useUsage.ts         # Fetches /usage/current on mount
 └── stores/
-    └── auth.ts                 # Zustand: session, user, signIn/signUp/signOut
+    ├── auth.ts                 # Zustand: session, user, signIn/signUp/signOut
+    └── cards.ts                # Zustand: pending/library cards, generation, selection
 ```
 
 ## Key Patterns
@@ -77,6 +91,27 @@ src/
 - Typed `ApiError` with `status`, `code`, `requestId`, `retryAfter`
 - AbortController timeout (default 60s)
 - Gets auth token directly from Supabase session (no intermediate storage)
+- Supports GET requests with `params` option (URLSearchParams)
+
+### Card Generation Flow
+1. User fills `GenerateForm` → submits to `useCardStore.generateCards()`
+2. Store calls `api.generateCards()` → POST `/cards/generate`
+3. Response cards get `crypto.randomUUID()` IDs (backend doesn't return persisted IDs)
+4. All cards auto-selected in `selectedCardIds` Set
+5. `Generate.tsx` auto-switches from form to `CardReview` panel
+6. User can edit (inline `CardEditor`), delete, select/deselect cards
+7. "Generate more" returns to form; "Discard all" clears store
+
+### HTML Sanitization
+- Backend generates card content as structured HTML with `fc-*` CSS classes
+- `CardReview.tsx` uses `SanitizedHTML` component: DOMPurify with allowlisted tags + `class`/`lang` attrs
+- Prevents XSS while preserving backend's semantic HTML structure
+
+### Code Splitting
+- All 11 route pages are lazy-loaded via `React.lazy()` + `<Suspense>`
+- `AppLayout` and `AuthGuard` remain eagerly loaded (needed immediately)
+- Vite automatically creates separate chunks per lazy route
+- Index chunk: ~581 KB; route chunks: 0.4–88 KB each
 
 ### Routing
 - Library mode: `<BrowserRouter>` → `<Routes>` → `<Route>`
@@ -91,9 +126,7 @@ src/
 - Output: `public/{page}.html` (gitignored build artifacts)
 
 ## Not Yet Implemented
-- Card generation form + API integration (Phase 2)
 - Card library + search/filter (Phase 3)
 - .apkg export with sql.js WASM (Phase 3)
 - Stripe Checkout + billing portal (Phase 4)
 - Account settings + data export (Phase 5)
-- Code splitting / lazy routes (Phase 2)

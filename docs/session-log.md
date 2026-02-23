@@ -78,3 +78,46 @@
 - ESLint: clean (0 warnings)
 - Vitest: 8/8 tests passing
 - Vite build: succeeds (prebuild + build pipeline)
+
+## Session 5 — 2026-02-23 — Phase 2: Card Generation & Review
+
+### What was done
+
+**Backend (flashcard-backend/):**
+- **Migration**: Created `cards` table with RLS policies, indexes, and `updated_at` trigger
+- **Card persistence**: `persistGeneratedCards()` service for async `waitUntil` persistence after HTTP response
+- **Library endpoints**: GET `/cards` (paginated, filterable), DELETE `/cards/:id` (soft delete), DELETE `/cards` (bulk soft delete)
+- **Validation schemas**: `LibraryQuerySchema`, `DeleteCardParamsSchema`, `BulkDeleteRequestSchema`
+- **Generate integration**: Wired `waitUntil(persistGeneratedCards(...))` into generate route
+- **Tests**: 9 library integration tests with Proxy-based Supabase mock chain builder
+
+**Frontend (flashcard-web/):**
+- **M2 — Store + API client**:
+  - Fixed `apiRequest` bug: `json.data as T` → `json as T` (backend returns top-level, not nested under `data`)
+  - Added GET request support with `params` option for URLSearchParams
+  - Created card types, Zustand card store, useCards/useUsage hooks, validation schema
+  - Added API methods: generateCards, getCards, deleteCard, deleteCards, getUsage
+  - 8 card store unit tests
+- **M3 — GenerateForm**: 10 domain options with icons, language selection (ja/default), card style + difficulty toggle groups, max cards slider, URL param handoff for browser extension, error handling per API error contract
+- **M4 — CardReview + CardEditor**: DOMPurify-sanitized HTML rendering, per-card select/edit/delete, quality filter (rejected/unsuitable collapsible), summary bar, select all/deselect all
+- **M5 — Wiring**: Generate.tsx form↔review toggle, UsageDisplay in sidebar (desktop + mobile), UpgradeModal dialog
+- **M6 — Code splitting**: `React.lazy()` + `<Suspense>` for all 11 route pages
+
+### New dependencies
+- `dompurify` + `@types/dompurify` — HTML sanitization for card previews
+- shadcn components: select, textarea, slider, radio-group, toggle-group, dialog, progress, collapsible, checkbox, skeleton
+
+### Architecture decisions
+- **Zod `.default()` removed from form schema**: Caused type mismatch with `zodResolver` (input vs output types). Defaults are provided via `useForm({ defaultValues })` instead.
+- **DOMPurify allowlist**: Only structural tags + `class`/`lang` attrs. Prevents XSS while preserving backend's `fc-*` CSS class structure.
+- **Card IDs are client-side**: Backend generate response doesn't include persisted IDs, so `crypto.randomUUID()` assigns temporary IDs in the Zustand store.
+- **`waitUntil` for persistence**: Cards are persisted asynchronously after the HTTP response returns, using Cloudflare Workers `executionCtx.waitUntil()`.
+- **Proxy-based Supabase mock**: Test utility that handles arbitrary fluent API chain depths without manual mock setup.
+
+### Quality gates
+- TypeScript strict: passing (0 errors)
+- ESLint: clean (0 warnings)
+- Vitest: 16/16 tests passing (8 auth + 8 cards)
+- Backend: 158/158 tests passing (149 existing + 9 new library tests)
+- Vite build: succeeds
+- Bundle: index chunk 581 KB (down from 697 KB), 11 lazy route chunks

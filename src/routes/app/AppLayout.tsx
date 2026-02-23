@@ -1,8 +1,11 @@
 import { Link, Outlet, useLocation } from "react-router";
 import { useState } from "react";
 import { useAuthStore } from "@/stores/auth";
+import { useUsage } from "@/lib/hooks/useUsage";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,6 +71,37 @@ function NavItems({
   );
 }
 
+function UsageDisplay() {
+  const { usage, isLoading } = useUsage();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2 px-3 py-2">
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-2 w-full" />
+      </div>
+    );
+  }
+
+  if (!usage) return null;
+
+  const { cards_generated, cards_limit, cards_remaining } = usage.usage;
+  const pct = cards_limit > 0 ? Math.min(100, (cards_generated / cards_limit) * 100) : 0;
+
+  return (
+    <Link
+      to="/app/billing"
+      className="block rounded-md px-3 py-2 transition-colors hover:bg-accent"
+    >
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>{cards_generated} / {cards_limit} cards</span>
+        <span>{cards_remaining} left</span>
+      </div>
+      <Progress value={pct} className="mt-1.5 h-1.5" />
+    </Link>
+  );
+}
+
 function UserMenu() {
   const { user, signOut } = useAuthStore();
   const email = user?.email ?? "";
@@ -112,6 +146,10 @@ export default function AppLayout() {
           <NavItems pathname={pathname} />
         </div>
         <Separator />
+        <div className="px-4 pt-3">
+          <UsageDisplay />
+        </div>
+        <Separator />
         <div className="p-4">
           <UserMenu />
         </div>
@@ -140,6 +178,10 @@ export default function AppLayout() {
                   pathname={pathname}
                   onNavigate={() => setMobileOpen(false)}
                 />
+              </div>
+              <Separator />
+              <div className="px-4 pt-3">
+                <UsageDisplay />
               </div>
               <Separator />
               <div className="p-4">
