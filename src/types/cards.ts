@@ -49,6 +49,31 @@ export interface LibraryCard {
   updated_at: string;
 }
 
+/**
+ * Minimum shape for CardEditor — both Card and LibraryCard satisfy this.
+ * Avoids union type issues from Card's index signature.
+ */
+export interface EditableCard {
+  id: string;
+  front: string;
+  back: string;
+  card_type: CardType;
+  tags: string[];
+  notes: string;
+}
+
+/** Body for PATCH /cards/:id */
+export interface UpdateCardRequest {
+  front?: string;
+  back?: string;
+  tags?: string[];
+  notes?: string;
+  domain?: CardDomain;
+}
+
+/** Supported export formats */
+export type ExportFormat = "apkg" | "csv" | "markdown" | "json";
+
 /** Rejected card from backend */
 export interface RejectedCard {
   card: Card;
@@ -110,6 +135,9 @@ export interface CardFilters {
   search?: string;
   sort?: "created_at" | "updated_at" | "domain";
   order?: "asc" | "desc";
+  tag?: string;
+  created_after?: string;
+  created_before?: string;
 }
 
 /** Response from GET /usage/current */

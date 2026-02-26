@@ -32,5 +32,24 @@ export function useLibrary() {
     isLoadingLibrary: s.isLoadingLibrary,
     fetchLibrary: s.fetchLibrary,
     deleteLibraryCard: s.deleteLibraryCard,
+    updateLibraryCard: s.updateLibraryCard,
+    bulkDeleteLibraryCards: s.bulkDeleteLibraryCards,
+  }));
+}
+
+export function useLibrarySelection() {
+  return useCardStore((s) => ({
+    librarySelectedIds: s.librarySelectedIds,
+    toggleLibrarySelection: s.toggleLibrarySelection,
+    selectAllLibraryCards: s.selectAllLibraryCards,
+    deselectAllLibraryCards: s.deselectAllLibraryCards,
+  }));
+}
+
+export function useExportCards() {
+  return useCardStore((s) => ({
+    exportCards: s.exportCards,
+    setExportCards: s.setExportCards,
+    clearExportCards: s.clearExportCards,
   }));
 }

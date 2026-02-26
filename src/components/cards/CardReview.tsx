@@ -1,7 +1,7 @@
 import { useState } from "react";
-import DOMPurify from "dompurify";
-import type { Card, RejectedCard, UnsuitableContent, GenerateResponse } from "@/types/cards";
+import type { Card, EditableCard, RejectedCard, UnsuitableContent, GenerateResponse } from "@/types/cards";
 import { useCardActions } from "@/lib/hooks/useCards";
+import { SanitizedHTML } from "@/components/cards/SanitizedHTML";
 import { CardEditor } from "@/components/cards/CardEditor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,41 +20,17 @@ import {
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
-// Sanitized HTML renderer
-// Uses DOMPurify to sanitize backend-generated HTML before rendering.
-// Only allows safe structural tags and the `class` attribute for fc-* styling.
-// ---------------------------------------------------------------------------
-
-function SanitizedHTML({ html, className }: { html: string; className?: string }) {
-  const clean = DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: [
-      "div", "span", "p", "br", "strong", "em", "b", "i", "u",
-      "ul", "ol", "li", "h1", "h2", "h3", "h4", "h5", "h6",
-      "ruby", "rt", "rp", "sub", "sup", "code", "pre", "mark",
-      "table", "thead", "tbody", "tr", "th", "td",
-    ],
-    ALLOWED_ATTR: ["class", "lang"],
-  });
-  return (
-    <div
-      className={className}
-      dangerouslySetInnerHTML={{ __html: clean }}
-    />
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Single card component
 // ---------------------------------------------------------------------------
 
 interface CardItemProps {
-  card: Card;
+  card: EditableCard;
   isSelected: boolean;
   onToggleSelect: () => void;
   onEdit: () => void;
   onDelete: () => void;
   isEditing: boolean;
-  onSave: (id: string, updates: Partial<Pick<Card, "front" | "back" | "tags">>) => void;
+  onSave: (id: string, updates: Partial<Pick<EditableCard, "front" | "back" | "tags" | "notes">>) => void;
   onCancelEdit: () => void;
 }
 

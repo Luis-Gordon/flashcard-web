@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Card } from "@/types/cards";
+import type { EditableCard } from "@/types/cards";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -7,23 +7,27 @@ import { Label } from "@/components/ui/label";
 import { Check, X } from "lucide-react";
 
 interface CardEditorProps {
-  card: Card;
-  onSave: (id: string, updates: Partial<Pick<Card, "front" | "back" | "tags">>) => void;
+  card: EditableCard;
+  showNotes?: boolean;
+  onSave: (id: string, updates: Partial<Pick<EditableCard, "front" | "back" | "tags" | "notes">>) => void;
   onCancel: () => void;
 }
 
-export function CardEditor({ card, onSave, onCancel }: CardEditorProps) {
+export function CardEditor({ card, showNotes, onSave, onCancel }: CardEditorProps) {
   const [front, setFront] = useState(card.front);
   const [back, setBack] = useState(card.back);
   const [tagsInput, setTagsInput] = useState(card.tags.join(", "));
+  const [notes, setNotes] = useState(card.notes);
 
   const handleSave = () => {
     const tags = tagsInput
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
-    onSave(card.id, { front, back, tags });
+    onSave(card.id, { front, back, tags, notes });
   };
+
+  const showNotesField = showNotes || card.notes.length > 0;
 
   return (
     <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
@@ -54,6 +58,18 @@ export function CardEditor({ card, onSave, onCancel }: CardEditorProps) {
           className="text-sm"
         />
       </div>
+
+      {showNotesField && (
+        <div className="space-y-1.5">
+          <Label className="text-xs">Notes</Label>
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="min-h-[50px] resize-y text-sm"
+            placeholder="Optional notes about this card..."
+          />
+        </div>
+      )}
 
       <div className="flex gap-2 pt-1">
         <Button size="sm" onClick={handleSave}>

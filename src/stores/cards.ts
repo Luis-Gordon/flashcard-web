@@ -9,6 +9,7 @@ import type {
   GenerateResponse,
   LibraryCard,
   CardFilters,
+  UpdateCardRequest,
 } from "@/types/cards";
 import * as api from "@/lib/api";
 
@@ -29,6 +30,12 @@ interface CardState {
   libraryPagination: { page: number; limit: number; total: number; total_pages: number };
   isLoadingLibrary: boolean;
 
+  // Library selection
+  librarySelectedIds: Set<string>;
+
+  // Export transfer
+  exportCards: (LibraryCard | Card)[];
+
   // Actions
   generateCards: (params: {
     content: string;
@@ -40,15 +47,22 @@ interface CardState {
   }) => Promise<void>;
   clearPendingCards: () => void;
   removePendingCard: (id: string) => void;
-  updatePendingCard: (id: string, updates: Partial<Pick<Card, "front" | "back" | "tags">>) => void;
+  updatePendingCard: (id: string, updates: Partial<Pick<Card, "front" | "back" | "tags" | "notes">>) => void;
   toggleCardSelection: (id: string) => void;
   selectAllCards: () => void;
   deselectAllCards: () => void;
   fetchLibrary: (filters?: CardFilters) => Promise<void>;
   deleteLibraryCard: (id: string) => Promise<void>;
+  updateLibraryCard: (id: string, updates: UpdateCardRequest) => Promise<LibraryCard>;
+  bulkDeleteLibraryCards: (ids: string[]) => Promise<void>;
+  toggleLibrarySelection: (id: string) => void;
+  selectAllLibraryCards: () => void;
+  deselectAllLibraryCards: () => void;
+  setExportCards: (cards: (LibraryCard | Card)[]) => void;
+  clearExportCards: () => void;
 }
 
-export const useCardStore = create<CardState>((set) => ({
+export const useCardStore = create<CardState>((set, get) => ({
   pendingCards: [],
   rejectedCards: [],
   unsuitableContent: [],
@@ -59,6 +73,8 @@ export const useCardStore = create<CardState>((set) => ({
   libraryCards: [],
   libraryPagination: { page: 1, limit: 20, total: 0, total_pages: 0 },
   isLoadingLibrary: false,
+  librarySelectedIds: new Set<string>(),
+  exportCards: [],
 
   generateCards: async ({ content, domain, cardStyle, difficulty, maxCards, hookKey }) => {
     set({ isGenerating: true, generateError: null });
@@ -141,7 +157,7 @@ export const useCardStore = create<CardState>((set) => ({
   deselectAllCards: () => set({ selectedCardIds: new Set() }),
 
   fetchLibrary: async (filters) => {
-    set({ isLoadingLibrary: true });
+    set({ isLoadingLibrary: true, librarySelectedIds: new Set() });
     try {
       const response = await api.getCards(filters);
       set({
@@ -164,4 +180,68 @@ export const useCardStore = create<CardState>((set) => ({
       },
     }));
   },
+
+  updateLibraryCard: async (id, updates) => {
+    const previousCard = get().libraryCards.find((c) => c.id === id);
+    if (!previousCard) throw new Error("Card not found in library");
+
+    // Optimistic local update
+    set((state) => ({
+      libraryCards: state.libraryCards.map((c) =>
+        c.id === id ? { ...c, ...updates, updated_at: new Date().toISOString() } : c,
+      ),
+    }));
+
+    try {
+      const response = await api.updateCard(id, updates);
+      // Apply canonical server response
+      set((state) => ({
+        libraryCards: state.libraryCards.map((c) =>
+          c.id === id ? response.card : c,
+        ),
+      }));
+      return response.card;
+    } catch (error) {
+      // Rollback on failure
+      set((state) => ({
+        libraryCards: state.libraryCards.map((c) =>
+          c.id === id ? previousCard : c,
+        ),
+      }));
+      throw error;
+    }
+  },
+
+  bulkDeleteLibraryCards: async (ids) => {
+    await api.deleteCards(ids);
+    const idSet = new Set(ids);
+    set((state) => ({
+      libraryCards: state.libraryCards.filter((c) => !idSet.has(c.id)),
+      librarySelectedIds: new Set(
+        [...state.librarySelectedIds].filter((selId) => !idSet.has(selId)),
+      ),
+      libraryPagination: {
+        ...state.libraryPagination,
+        total: Math.max(0, state.libraryPagination.total - ids.length),
+      },
+    }));
+  },
+
+  toggleLibrarySelection: (id) =>
+    set((state) => {
+      const next = new Set(state.librarySelectedIds);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return { librarySelectedIds: next };
+    }),
+
+  selectAllLibraryCards: () =>
+    set((state) => ({
+      librarySelectedIds: new Set(state.libraryCards.map((c) => c.id)),
+    })),
+
+  deselectAllLibraryCards: () => set({ librarySelectedIds: new Set() }),
+
+  setExportCards: (cards) => set({ exportCards: cards }),
+  clearExportCards: () => set({ exportCards: [] }),
 }));

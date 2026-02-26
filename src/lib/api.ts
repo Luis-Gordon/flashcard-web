@@ -5,6 +5,8 @@ import type {
   LibraryResponse,
   CardFilters,
   UsageResponse,
+  UpdateCardRequest,
+  LibraryCard,
 } from "@/types/cards";
 
 export type ErrorCode =
@@ -153,6 +155,16 @@ export function deleteCards(ids: string[]): Promise<{ request_id: string; delete
   return apiRequest("/cards", {
     method: "DELETE",
     body: { ids },
+  });
+}
+
+export function updateCard(
+  id: string,
+  updates: UpdateCardRequest,
+): Promise<{ request_id: string; card: LibraryCard }> {
+  return apiRequest(`/cards/${id}`, {
+    method: "PATCH",
+    body: updates as unknown as Record<string, unknown>,
   });
 }
 
