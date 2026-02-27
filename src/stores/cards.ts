@@ -58,6 +58,8 @@ interface CardState {
   toggleLibrarySelection: (id: string) => void;
   selectAllLibraryCards: () => void;
   deselectAllLibraryCards: () => void;
+  removeLibraryCardLocally: (id: string) => { card: LibraryCard; index: number } | null;
+  restoreLibraryCard: (card: LibraryCard, index: number) => void;
   setExportCards: (cards: (LibraryCard | Card)[]) => void;
   clearExportCards: () => void;
 }
@@ -241,6 +243,38 @@ export const useCardStore = create<CardState>((set, get) => ({
     })),
 
   deselectAllLibraryCards: () => set({ librarySelectedIds: new Set() }),
+
+  removeLibraryCardLocally: (id) => {
+    const state = get();
+    const index = state.libraryCards.findIndex((c) => c.id === id);
+    if (index === -1) return null;
+    const card = state.libraryCards[index]!;
+    set({
+      libraryCards: state.libraryCards.filter((c) => c.id !== id),
+      librarySelectedIds: new Set(
+        [...state.librarySelectedIds].filter((selId) => selId !== id),
+      ),
+      libraryPagination: {
+        ...state.libraryPagination,
+        total: Math.max(0, state.libraryPagination.total - 1),
+      },
+    });
+    return { card, index };
+  },
+
+  restoreLibraryCard: (card, index) => {
+    set((state) => {
+      const next = [...state.libraryCards];
+      next.splice(Math.min(index, next.length), 0, card);
+      return {
+        libraryCards: next,
+        libraryPagination: {
+          ...state.libraryPagination,
+          total: state.libraryPagination.total + 1,
+        },
+      };
+    });
+  },
 
   setExportCards: (cards) => set({ exportCards: cards }),
   clearExportCards: () => set({ exportCards: [] }),

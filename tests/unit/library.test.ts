@@ -140,6 +140,36 @@ describe("library store extensions", () => {
     expect(selected.has("c")).toBe(true);
   });
 
+  // --- Local remove + restore (undo delete) ---
+
+  it("removeLibraryCardLocally removes card and returns it with index", () => {
+    const result = useCardStore.getState().removeLibraryCardLocally("b");
+    expect(result).not.toBeNull();
+    expect(result!.card.id).toBe("b");
+    expect(result!.index).toBe(1);
+    expect(useCardStore.getState().libraryCards).toHaveLength(2);
+    expect(useCardStore.getState().libraryPagination.total).toBe(2);
+  });
+
+  it("removeLibraryCardLocally returns null for unknown ID", () => {
+    const result = useCardStore.getState().removeLibraryCardLocally("unknown");
+    expect(result).toBeNull();
+    expect(useCardStore.getState().libraryCards).toHaveLength(3);
+  });
+
+  it("removeLibraryCardLocally clears selection for removed card", () => {
+    useCardStore.getState().toggleLibrarySelection("b");
+    useCardStore.getState().removeLibraryCardLocally("b");
+    expect(useCardStore.getState().librarySelectedIds.has("b")).toBe(false);
+  });
+
+  it("restoreLibraryCard re-inserts at correct index", () => {
+    const result = useCardStore.getState().removeLibraryCardLocally("b")!;
+    useCardStore.getState().restoreLibraryCard(result.card, result.index);
+    expect(useCardStore.getState().libraryCards[1]!.id).toBe("b");
+    expect(useCardStore.getState().libraryPagination.total).toBe(3);
+  });
+
   // --- Export transfer ---
 
   it("sets and clears export cards", () => {

@@ -46,6 +46,13 @@ export function useLibrarySelection() {
   }));
 }
 
+export function useLibraryUndoDelete() {
+  return useCardStore((s) => ({
+    removeLibraryCardLocally: s.removeLibraryCardLocally,
+    restoreLibraryCard: s.restoreLibraryCard,
+  }));
+}
+
 export function useExportCards() {
   return useCardStore((s) => ({
     exportCards: s.exportCards,
