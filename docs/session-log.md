@@ -121,3 +121,42 @@
 - Backend: 158/158 tests passing (149 existing + 9 new library tests)
 - Vite build: succeeds
 - Bundle: index chunk 581 KB (down from 697 KB), 11 lazy route chunks
+
+## Session 6 — 2026-02-27 — Phase 3B: Shared Infrastructure (M2) + Library Core (M3)
+
+### What was done
+
+**M2 — Shared Infrastructure:**
+- **Dependencies**: Installed `sql.js`, `jszip`, `date-fns` as runtime deps. Added 7 shadcn components (popover, calendar, command, table, tabs, tooltip, alert-dialog). Copied `sql-wasm.wasm` to `public/` with `postinstall` script.
+- **SanitizedHTML extraction**: Extracted inline `SanitizedHTML` function from `CardReview.tsx` into shared `src/components/cards/SanitizedHTML.tsx` for reuse across library and generation views.
+- **Type extensions**: Added `EditableCard` (structural minimum for CardEditor), `UpdateCardRequest` (PATCH body), `ExportFormat`, and extended `CardFilters` with `tag`, `created_after`, `created_before`.
+- **API client**: Added `updateCard()` PATCH endpoint to `api.ts`.
+- **Settings store**: Created `src/stores/settings.ts` — first Zustand store with `persist` middleware. Stores `libraryViewMode` (grid/list) and `recentDeckNames` in localStorage.
+- **Card store extensions**: Added `librarySelectedIds` (Set), `exportCards` array, `updateLibraryCard` (optimistic update + server response + rollback on failure), `bulkDeleteLibraryCards`, selection actions (`toggle/selectAll/deselectAll`), export transfer actions.
+- **Hooks**: Extended `useLibrary` with new actions, added `useLibrarySelection` and `useExportCards` hooks.
+- **CardEditor widening**: Changed prop type from `Card` to `EditableCard`, added `showNotes` prop and notes textarea field. Updated `CardReview` `CardItemProps` to match.
+- **Tests**: Created `tests/unit/library.test.ts` with 8 tests (selection toggle, select/deselect all, optimistic update + rollback, bulk delete + pagination update, selection cleanup after delete, export transfer). Updated `cards.test.ts` `beforeEach` reset with new fields.
+
+**M3 — Library Page:**
+- **LibraryCardItem**: Grid/list card component with domain-specific color-coded badges (10 domains), `formatDistanceToNow` relative dates, expand/collapse for back content, hover-reveal edit/delete actions, multi-select checkbox, inline `CardEditor` with `showNotes`.
+- **Library.tsx**: Replaced placeholder with full library page. Responsive grid (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`) and list views. Grid/list toggle persisted via settings store. Pagination bar (prev/next + page indicator). Bulk delete with `AlertDialog` confirmation. Three empty states: no cards (CTA to generate), no filter matches (clear filters), loading (6 skeleton cards). Select all/deselect all bar.
+
+### New dependencies
+- `sql.js` — SQLite in WASM (for .apkg export, Phase 3C)
+- `jszip` — ZIP archive generation (for .apkg export, Phase 3C)
+- `date-fns` — Relative date formatting (`formatDistanceToNow`)
+- shadcn components: popover, calendar, command, table, tabs, tooltip, alert-dialog
+
+### Architecture decisions
+- **Zustand `persist` middleware**: First store to use `create<T>()(...)` double-call syntax required for TypeScript strict mode with middleware. localStorage key: `memogenesis-settings`.
+- **Optimistic updates with rollback**: `updateLibraryCard` captures previous card state before mutating, applies server response on success, restores original on failure. Gives instant UI feedback while maintaining data integrity.
+- **`EditableCard` as structural interface**: Avoids union type issues from `Card`'s index signature (`[key: string]: unknown`). Both `Card` and `LibraryCard` satisfy this shape, so `CardEditor` works with either.
+- **Domain color coding**: Each of 10 domains mapped to distinct Tailwind color pairs (light/dark mode) for visual differentiation in the library grid.
+- **`fetchLibrary` clears selection**: Library selection is page-scoped — navigating to a new page resets `librarySelectedIds` to prevent stale selections across pages.
+
+### Quality gates
+- TypeScript strict: passing (0 errors)
+- ESLint: clean (0 warnings)
+- Vitest: 24/24 tests passing (8 auth + 8 cards + 8 library)
+- Vite build: succeeds
+- Bundle: Library chunk 28.8 KB (9.5 KB gzip), index chunk unchanged at ~581 KB

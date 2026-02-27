@@ -25,10 +25,12 @@ Browser → Cloudflare Workers (static) → SPA
 | Validation | Zod | 4.x |
 | Forms | react-hook-form + @hookform/resolvers | 7.x / 5.x |
 | HTML Sanitization | DOMPurify | 3.x |
+| Dates | date-fns | 4.x |
+| Export (Phase 3C) | sql.js (WASM) + JSZip | 1.x / 3.x |
 | Testing | Vitest + @testing-library/react | 4.x / 16.x |
 | Hosting | Cloudflare Workers | — |
 
-## Directory Structure (Phase 2)
+## Directory Structure (Phase 3)
 
 ```
 src/
@@ -37,7 +39,7 @@ src/
 ├── index.css                   # Tailwind v4 + shadcn CSS variables
 ├── vite-env.d.ts               # ImportMetaEnv types
 ├── types/
-│   └── cards.ts                # Card, GenerateResponse, LibraryResponse types
+│   └── cards.ts                # Card, EditableCard, LibraryCard, UpdateCardRequest, ExportFormat
 ├── routes/
 │   ├── Landing.tsx             # Marketing landing page
 │   ├── Pricing.tsx             # 3-tier pricing page
@@ -48,18 +50,20 @@ src/
 │   └── app/
 │       ├── AppLayout.tsx       # Sidebar nav + usage display + outlet
 │       ├── Generate.tsx        # Form ↔ review toggle
-│       ├── Library.tsx         # Placeholder (Phase 3)
-│       ├── Export.tsx          # Placeholder (Phase 3)
+│       ├── Library.tsx         # Paginated grid/list view, inline editing, bulk actions
+│       ├── Export.tsx          # Placeholder (Phase 3C)
 │       ├── Billing.tsx         # Placeholder (Phase 4)
 │       └── Settings.tsx        # Placeholder (Phase 5)
 ├── components/
 │   ├── AuthGuard.tsx           # Route guard: redirect if unauthenticated
 │   ├── MarketingLayout.tsx     # Header + footer for public pages
-│   ├── ui/                     # shadcn/ui components (22 installed)
+│   ├── ui/                     # shadcn/ui components (29 installed)
 │   ├── cards/
+│   │   ├── SanitizedHTML.tsx   # Shared DOMPurify HTML renderer (fc-* safe)
 │   │   ├── GenerateForm.tsx    # Domain/style/difficulty form + content textarea
 │   │   ├── CardReview.tsx      # Card list with select/edit/delete + quality filter
-│   │   └── CardEditor.tsx      # Inline card editor (front/back/tags)
+│   │   ├── CardEditor.tsx      # Inline card editor (front/back/tags/notes)
+│   │   └── LibraryCardItem.tsx # Library card: grid/list, domain badge, expand, select
 │   └── billing/
 │       └── UpgradeModal.tsx    # Usage exceeded → tier comparison dialog
 ├── lib/
@@ -71,11 +75,12 @@ src/
 │   │   ├── auth.ts             # Zod schemas: loginSchema, signupSchema
 │   │   └── cards.ts            # generateFormSchema, CARD_DOMAINS
 │   └── hooks/
-│       ├── useCards.ts         # Selectors on card store (generation, actions, library)
+│       ├── useCards.ts         # Selectors: useCards, useCardActions, useLibrary, useLibrarySelection, useExportCards
 │       └── useUsage.ts         # Fetches /usage/current on mount
 └── stores/
     ├── auth.ts                 # Zustand: session, user, signIn/signUp/signOut
-    └── cards.ts                # Zustand: pending/library cards, generation, selection
+    ├── cards.ts                # Zustand: pending/library cards, generation, selection, export transfer
+    └── settings.ts             # Zustand (persist): view mode, recent deck names
 ```
 
 ## Key Patterns
@@ -104,8 +109,22 @@ src/
 
 ### HTML Sanitization
 - Backend generates card content as structured HTML with `fc-*` CSS classes
-- `CardReview.tsx` uses `SanitizedHTML` component: DOMPurify with allowlisted tags + `class`/`lang` attrs
+- Shared `SanitizedHTML` component (`src/components/cards/SanitizedHTML.tsx`): DOMPurify with allowlisted tags + `class`/`lang` attrs
+- Used by both `CardReview` (generation) and `LibraryCardItem` (library)
 - Prevents XSS while preserving backend's semantic HTML structure
+
+### Library Page
+- **Grid/list toggle**: View mode persisted in `useSettingsStore` (localStorage)
+- **Pagination**: Page-scoped — changing page clears `librarySelectedIds`
+- **Optimistic updates**: `updateLibraryCard` applies changes locally, then reconciles with server response; rolls back on failure
+- **Bulk delete**: Confirmation via `AlertDialog`, removes from `libraryCards` + `librarySelectedIds` + decrements `total`
+- **Three empty states**: (1) no cards ever → CTA to generate, (2) filters active with no matches → clear filters, (3) loading → 6 skeleton cards
+- **Domain badges**: 10 color-coded domain badges using Tailwind palette colors (not theme variables)
+
+### Settings Store
+- First store using Zustand `persist` middleware with `create<T>()(...)` double-call syntax
+- localStorage key: `memogenesis-settings`
+- Stores `libraryViewMode` (grid/list) and `recentDeckNames` (max 5, MRU order)
 
 ### Code Splitting
 - All 11 route pages are lazy-loaded via `React.lazy()` + `<Suspense>`
@@ -126,7 +145,8 @@ src/
 - Output: `public/{page}.html` (gitignored build artifacts)
 
 ## Not Yet Implemented
-- Card library + search/filter (Phase 3)
-- .apkg export with sql.js WASM (Phase 3)
+- Library search/filter toolbar (Phase 3C)
+- .apkg export with sql.js WASM + deck builder UI (Phase 3C)
+- CSV/Markdown/JSON export formats (Phase 3C)
 - Stripe Checkout + billing portal (Phase 4)
 - Account settings + data export (Phase 5)
