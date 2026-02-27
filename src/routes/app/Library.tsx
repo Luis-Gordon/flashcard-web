@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router";
-import { useLibrary, useLibrarySelection } from "@/lib/hooks/useCards";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { useLibrary, useLibrarySelection, useLibraryUndoDelete, useExportCards } from "@/lib/hooks/useCards";
 import { useSettingsStore } from "@/stores/settings";
-import type { CardFilters, UpdateCardRequest } from "@/types/cards";
+import * as api from "@/lib/api";
+import type { CardFilters, LibraryCard, UpdateCardRequest } from "@/types/cards";
 import { LibraryCardItem } from "@/components/cards/LibraryCardItem";
+import { LibraryToolbar } from "@/components/cards/LibraryToolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,6 +29,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Trash2,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -44,7 +47,6 @@ export default function Library() {
     libraryPagination,
     isLoadingLibrary,
     fetchLibrary,
-    deleteLibraryCard,
     updateLibraryCard,
     bulkDeleteLibraryCards,
   } = useLibrary();
@@ -55,6 +57,10 @@ export default function Library() {
     selectAllLibraryCards,
     deselectAllLibraryCards,
   } = useLibrarySelection();
+
+  const { removeLibraryCardLocally, restoreLibraryCard } = useLibraryUndoDelete();
+  const { setExportCards } = useExportCards();
+  const navigate = useNavigate();
 
   const libraryViewMode = useSettingsStore((s) => s.libraryViewMode);
   const setLibraryViewMode = useSettingsStore((s) => s.setLibraryViewMode);
@@ -70,7 +76,9 @@ export default function Library() {
   const hasActiveFilters =
     currentFilters.domain !== undefined ||
     currentFilters.search !== undefined ||
-    currentFilters.tag !== undefined;
+    currentFilters.tag !== undefined ||
+    currentFilters.created_after !== undefined ||
+    currentFilters.created_before !== undefined;
 
   const allSelected = libraryCards.length > 0 && librarySelectedIds.size === libraryCards.length;
   const someSelected = librarySelectedIds.size > 0;
@@ -79,14 +87,65 @@ export default function Library() {
     setCurrentFilters((prev) => ({ ...prev, page: newPage }));
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteLibraryCard(id);
-      toast.success("Card deleted");
-    } catch {
-      toast.error("Failed to delete card");
-    }
+  const handleFilterChange = (updates: Partial<CardFilters>) => {
+    setCurrentFilters((prev) => ({ ...prev, ...updates, page: 1 }));
   };
+
+  const clearFilters = () => {
+    setCurrentFilters(DEFAULT_FILTERS);
+  };
+
+  // --- Undo delete ---
+  const pendingDeletes = useRef<
+    Map<string, { card: LibraryCard; index: number; timeoutId: ReturnType<typeof setTimeout> }>
+  >(new Map());
+
+  const handleDelete = (id: string) => {
+    const result = removeLibraryCardLocally(id);
+    if (!result) return;
+
+    const existing = pendingDeletes.current.get(id);
+    if (existing) clearTimeout(existing.timeoutId);
+
+    const timeoutId = setTimeout(async () => {
+      pendingDeletes.current.delete(id);
+      try {
+        await api.deleteCard(id);
+      } catch {
+        // fire-and-forget — card already removed from UI
+      }
+    }, 5000);
+
+    pendingDeletes.current.set(id, { card: result.card, index: result.index, timeoutId });
+
+    toast("Card deleted", {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          const pending = pendingDeletes.current.get(id);
+          if (pending) {
+            clearTimeout(pending.timeoutId);
+            pendingDeletes.current.delete(id);
+            restoreLibraryCard(pending.card, pending.index);
+          }
+        },
+      },
+      duration: 5000,
+    });
+  };
+
+  // Flush pending deletes on unmount
+  useEffect(() => {
+    return () => {
+      for (const [, { timeoutId }] of pendingDeletes.current.entries()) {
+        clearTimeout(timeoutId);
+      }
+      for (const [id] of pendingDeletes.current.entries()) {
+        api.deleteCard(id).catch(() => {});
+      }
+      pendingDeletes.current.clear();
+    };
+  }, []);
 
   const handleSave = async (id: string, updates: UpdateCardRequest) => {
     try {
@@ -108,8 +167,10 @@ export default function Library() {
     }
   };
 
-  const clearFilters = () => {
-    setCurrentFilters(DEFAULT_FILTERS);
+  const handleExportSelected = () => {
+    const selectedCards = libraryCards.filter((c) => librarySelectedIds.has(c.id));
+    setExportCards(selectedCards);
+    navigate("/app/export");
   };
 
   // --- Loading state ---
@@ -176,6 +237,12 @@ export default function Library() {
     return (
       <div className="mx-auto max-w-6xl">
         <h1 className="mb-6 text-2xl font-bold tracking-tight">Card Library</h1>
+        <LibraryToolbar
+          filters={currentFilters}
+          libraryCards={libraryCards}
+          onFilterChange={handleFilterChange}
+          onClearFilters={clearFilters}
+        />
         <div className="flex flex-col items-center gap-4 py-20 text-center">
           <p className="text-sm text-muted-foreground">No cards match your filters.</p>
           <Button variant="outline" size="sm" onClick={clearFilters}>
@@ -190,7 +257,7 @@ export default function Library() {
   return (
     <div className="mx-auto max-w-6xl">
       {/* Page header */}
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Card Library</h1>
         <Badge variant="secondary" className="tabular-nums">
           {total} card{total !== 1 ? "s" : ""}
@@ -199,28 +266,34 @@ export default function Library() {
         <div className="ml-auto flex items-center gap-2">
           {/* Bulk actions */}
           {someSelected && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" className="gap-1.5">
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Delete {librarySelectedIds.size}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete {librarySelectedIds.size} card{librarySelectedIds.size > 1 ? "s" : ""}?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. The selected cards will be permanently deleted.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleBulkDelete}>
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <>
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={handleExportSelected}>
+                <Download className="h-3.5 w-3.5" />
+                Export {librarySelectedIds.size}
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="gap-1.5">
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete {librarySelectedIds.size}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete {librarySelectedIds.size} card{librarySelectedIds.size > 1 ? "s" : ""}?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. The selected cards will be permanently deleted.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleBulkDelete}>
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
           )}
 
           {/* View mode toggle */}
@@ -251,6 +324,16 @@ export default function Library() {
             </Button>
           </div>
         </div>
+      </div>
+
+      {/* Filter toolbar */}
+      <div className="mb-4">
+        <LibraryToolbar
+          filters={currentFilters}
+          libraryCards={libraryCards}
+          onFilterChange={handleFilterChange}
+          onClearFilters={clearFilters}
+        />
       </div>
 
       {/* Select all bar */}
