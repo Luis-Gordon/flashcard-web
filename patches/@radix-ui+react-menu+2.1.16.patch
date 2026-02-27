@@ -1,0 +1,42 @@
+diff --git a/node_modules/@radix-ui/react-menu/dist/index.js b/node_modules/@radix-ui/react-menu/dist/index.js
+index 4d102d0..f36f3f2 100644
+--- a/node_modules/@radix-ui/react-menu/dist/index.js
++++ b/node_modules/@radix-ui/react-menu/dist/index.js
+@@ -688,6 +688,7 @@ var MenuSubTrigger = React.forwardRef(
+     const rootContext = useMenuRootContext(SUB_TRIGGER_NAME, props.__scopeMenu);
+     const subContext = useMenuSubContext(SUB_TRIGGER_NAME, props.__scopeMenu);
+     const contentContext = useMenuContentContext(SUB_TRIGGER_NAME, props.__scopeMenu);
++    const composedSubTriggerRef = (0, import_react_compose_refs.useComposedRefs)(forwardedRef, subContext.onTriggerChange);
+     const openTimerRef = React.useRef(null);
+     const { pointerGraceTimerRef, onPointerGraceIntentChange } = contentContext;
+     const scope = { __scopeMenu: props.__scopeMenu };
+@@ -712,7 +713,7 @@ var MenuSubTrigger = React.forwardRef(
+         "aria-controls": subContext.contentId,
+         "data-state": getOpenState(context.open),
+         ...props,
+-        ref: (0, import_react_compose_refs.composeRefs)(forwardedRef, subContext.onTriggerChange),
++        ref: composedSubTriggerRef,
+         onClick: (event) => {
+           props.onClick?.(event);
+           if (props.disabled || event.defaultPrevented) return;
+diff --git a/node_modules/@radix-ui/react-menu/dist/index.mjs b/node_modules/@radix-ui/react-menu/dist/index.mjs
+index 10eefb0..dba0a6e 100644
+--- a/node_modules/@radix-ui/react-menu/dist/index.mjs
++++ b/node_modules/@radix-ui/react-menu/dist/index.mjs
+@@ -621,6 +621,7 @@ var MenuSubTrigger = React.forwardRef(
+     const rootContext = useMenuRootContext(SUB_TRIGGER_NAME, props.__scopeMenu);
+     const subContext = useMenuSubContext(SUB_TRIGGER_NAME, props.__scopeMenu);
+     const contentContext = useMenuContentContext(SUB_TRIGGER_NAME, props.__scopeMenu);
++    const composedSubTriggerRef = useComposedRefs(forwardedRef, subContext.onTriggerChange);
+     const openTimerRef = React.useRef(null);
+     const { pointerGraceTimerRef, onPointerGraceIntentChange } = contentContext;
+     const scope = { __scopeMenu: props.__scopeMenu };
+@@ -645,7 +646,7 @@ var MenuSubTrigger = React.forwardRef(
+         "aria-controls": subContext.contentId,
+         "data-state": getOpenState(context.open),
+         ...props,
+-        ref: composeRefs(forwardedRef, subContext.onTriggerChange),
++        ref: composedSubTriggerRef,
+         onClick: (event) => {
+           props.onClick?.(event);
+           if (props.disabled || event.defaultPrevented) return;
