@@ -48,10 +48,10 @@ src/
 │   ├── Login.tsx               # Auth: login form
 │   ├── Signup.tsx              # Auth: signup form
 │   └── app/
-│       ├── AppLayout.tsx       # Sidebar nav + usage display + outlet
-│       ├── Generate.tsx        # Form ↔ review toggle
-│       ├── Library.tsx         # Paginated grid/list view, inline editing, bulk actions
-│       ├── Export.tsx          # Placeholder (Phase 3C)
+│       ├── AppLayout.tsx       # Sidebar nav + usage display + card count badge + outlet
+│       ├── Generate.tsx        # Form ↔ review toggle + export selected
+│       ├── Library.tsx         # Paginated grid/list, filters, undo delete, export selected
+│       ├── Export.tsx          # Placeholder (Phase 3D)
 │       ├── Billing.tsx         # Placeholder (Phase 4)
 │       └── Settings.tsx        # Placeholder (Phase 5)
 ├── components/
@@ -61,9 +61,10 @@ src/
 │   ├── cards/
 │   │   ├── SanitizedHTML.tsx   # Shared DOMPurify HTML renderer (fc-* safe)
 │   │   ├── GenerateForm.tsx    # Domain/style/difficulty form + content textarea
-│   │   ├── CardReview.tsx      # Card list with select/edit/delete + quality filter
+│   │   ├── CardReview.tsx      # Card list with select/edit/delete + quality filter + export
 │   │   ├── CardEditor.tsx      # Inline card editor (front/back/tags/notes)
-│   │   └── LibraryCardItem.tsx # Library card: grid/list, domain badge, expand, select
+│   │   ├── LibraryCardItem.tsx # Library card: grid/list, domain badge, expand, select
+│   │   └── LibraryToolbar.tsx  # Filter toolbar: domain, search, tag, date, sort + pills
 │   └── billing/
 │       └── UpgradeModal.tsx    # Usage exceeded → tier comparison dialog
 ├── lib/
@@ -71,11 +72,14 @@ src/
 │   ├── supabase.ts             # Supabase browser client (singleton)
 │   ├── pricing.ts              # Pricing tier constants
 │   ├── utils.ts                # cn() utility (shadcn)
+│   ├── constants/
+│   │   └── domains.ts          # Shared DOMAIN_LABELS + DOMAIN_COLORS maps
 │   ├── validation/
 │   │   ├── auth.ts             # Zod schemas: loginSchema, signupSchema
 │   │   └── cards.ts            # generateFormSchema, CARD_DOMAINS
 │   └── hooks/
-│       ├── useCards.ts         # Selectors: useCards, useCardActions, useLibrary, useLibrarySelection, useExportCards
+│       ├── useCards.ts         # Selectors: useCards, useCardActions, useLibrary, useLibrarySelection, useLibraryUndoDelete, useExportCards
+│       ├── useCardCount.ts     # Hybrid hook: store total → API fallback (nav badge)
 │       └── useUsage.ts         # Fetches /usage/current on mount
 └── stores/
     ├── auth.ts                 # Zustand: session, user, signIn/signUp/signOut
@@ -118,8 +122,14 @@ src/
 - **Pagination**: Page-scoped — changing page clears `librarySelectedIds`
 - **Optimistic updates**: `updateLibraryCard` applies changes locally, then reconciles with server response; rolls back on failure
 - **Bulk delete**: Confirmation via `AlertDialog`, removes from `libraryCards` + `librarySelectedIds` + decrements `total`
-- **Three empty states**: (1) no cards ever → CTA to generate, (2) filters active with no matches → clear filters, (3) loading → 6 skeleton cards
+- **Three empty states**: (1) no cards ever → CTA to generate, (2) filters active with no matches → toolbar + clear button, (3) loading → 6 skeleton cards
 - **Domain badges**: 10 color-coded domain badges using Tailwind palette colors (not theme variables)
+- **Filter toolbar** (`LibraryToolbar`): Controlled component — receives `filters` + emits `onFilterChange` partial updates. Domain select, debounced search (300ms local state), tag combobox (derived from current page's cards), date range pickers (From/To with mutual constraints), sort select. Active filter pills rendered below toolbar when any non-default filter is set.
+- **Undo delete**: `removeLibraryCardLocally` strips card synchronously + returns `{ card, index }`. 5s `setTimeout` fires `api.deleteCard()`. Sonner toast with "Undo" action calls `restoreLibraryCard(card, index)` and cancels the timeout. On unmount, all pending deletes are flushed (fire-and-forget API calls).
+- **Export selected**: Filters `libraryCards` by `librarySelectedIds`, calls `setExportCards()`, navigates to `/app/export`.
+
+### Card Count Badge
+- `useCardCount` hook: reads `libraryPagination.total` from Zustand store when available; otherwise fires lightweight `getCards({ page: 1, limit: 1 })` to fetch just the total. Renders as `Badge` on the Library nav item (desktop + mobile). Caps display at "999+".
 
 ### Settings Store
 - First store using Zustand `persist` middleware with `create<T>()(...)` double-call syntax
@@ -145,8 +155,7 @@ src/
 - Output: `public/{page}.html` (gitignored build artifacts)
 
 ## Not Yet Implemented
-- Library search/filter toolbar (Phase 3C)
-- .apkg export with sql.js WASM + deck builder UI (Phase 3C)
-- CSV/Markdown/JSON export formats (Phase 3C)
+- .apkg export with sql.js WASM + deck builder UI (Phase 3D/E)
+- CSV/Markdown/JSON export formats (Phase 3D)
 - Stripe Checkout + billing portal (Phase 4)
 - Account settings + data export (Phase 5)

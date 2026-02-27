@@ -2,16 +2,16 @@
 React SPA for card generation, library management, .apkg export, and billing. Vite + TypeScript + Cloudflare Workers.
 
 ## Current Status
-- **Phase**: 3 — in progress. M1 (backend PATCH + filters) and M2+M3 (shared infra + library core) complete.
-- **Library page**: Paginated grid/list view, inline editing, bulk delete, domain badges, 3 empty states. Settings store persists view mode.
+- **Phase**: 3 — M4 complete. Library page fully functional with filters, undo delete, export actions, nav badge.
+- **Library page**: Paginated grid/list view, inline editing, bulk delete, domain badges, 3 empty states, filter toolbar (domain/search/tag/date/sort), undo-able single delete, export selected, card count badge in sidebar nav.
+- **Generate page**: Export button in CardReview summary bar → transfers selected cards to Export page.
 - **Backend prerequisite**: Phase 5b billing migration must be deployed to production before web app launch.
-- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (24/24 tests), build succeeds.
+- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (28/28 tests), build succeeds.
 
 ## Next Session Tasks
-1. **Phase 3C: Library filters + polish** — LibraryToolbar (domain/search/tag/date filters), undo delete, "Export selected" bulk action, card count badge in nav
-2. **Phase 3D: Export page** — CSV/Markdown/JSON exporters, Export.tsx with format selector + options + preview
-3. **Phase 3E: APKG export** — sql.js WASM builder, .apkg format, Generate→Export flow, keyboard shortcuts
-4. **Staging deployment** — Deploy to Cloudflare Workers, test against backend staging API
+1. **Phase 3D: Export page** — CSV/Markdown/JSON exporters, Export.tsx with format selector + options + preview
+2. **Phase 3E: APKG export** — sql.js WASM builder, .apkg format, Generate→Export flow, keyboard shortcuts
+3. **Phase 3F: Polish** — keyboard shortcuts, staging deployment, test against backend staging API
 
 ## CRITICAL Constraints
 - **NEVER** handle credit card details — Stripe Checkout (redirect) only

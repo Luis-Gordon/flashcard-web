@@ -161,9 +161,9 @@
 - Vite build: succeeds
 - Bundle: Library chunk 28.8 KB (9.5 KB gzip), index chunk unchanged at ~581 KB
 
-## Session 7 — 2026-02-27 — Phase 3C: Library Filters, Undo Delete, Export Actions (in progress)
+## Session 7 — 2026-02-27 — Phase 3C: Library Filters, Undo Delete, Export Actions
 
-### What was done (Batch 1 of 3)
+### What was done
 
 **Task 1 — Domain constants extraction:**
 - Created `src/lib/constants/domains.ts` with shared `DOMAIN_LABELS` and `DOMAIN_COLORS` maps.
@@ -183,7 +183,34 @@
   - Sort select (Newest/Oldest/By domain)
   - Active filter pills with individual clear buttons + "Clear all"
 
-### Quality gates (checkpoint)
+**Task 4 — Library.tsx integration:**
+- Wired `LibraryToolbar` into main and filter-empty views.
+- Replaced synchronous `deleteLibraryCard` with deferred undo pattern: `removeLibraryCardLocally` + 5s setTimeout + sonner toast with Undo action. Flush pending deletes on unmount.
+- Added "Export selected" button alongside bulk delete (transfers selected cards via `setExportCards` + navigates to `/app/export`).
+- Extended `hasActiveFilters` to include date filters.
+
+**Task 5 — Generate→Export flow:**
+- Added `onExportSelected` optional prop to `CardReview` with export button in summary bar.
+- Wired handler in `Generate.tsx`: filters pending cards by selection, calls `setExportCards()`, navigates to `/app/export`.
+
+**Task 6 — Card count badge:**
+- Created `src/lib/hooks/useCardCount.ts`: hybrid hook reads store total when available, otherwise fires lightweight `getCards({ page: 1, limit: 1 })`.
+- Added `Badge` to Library nav item in `AppLayout.tsx` (both desktop sidebar and mobile sheet). Caps at "999+".
+
+### New files
+- `src/lib/constants/domains.ts` — shared domain label/color maps
+- `src/components/cards/LibraryToolbar.tsx` — filter toolbar component
+- `src/lib/hooks/useCardCount.ts` — nav badge hook
+
+### Architecture decisions
+- **Undo delete (deferred API)**: Single card delete uses optimistic local removal + deferred `api.deleteCard()` behind a 5s timeout. Sonner toast "Undo" action cancels the timeout and restores the card at its original index. On unmount, pending deletes are flushed. Bulk delete retains AlertDialog confirmation (no undo) since it's already behind a confirmation step.
+- **Toolbar as controlled component**: `LibraryToolbar` receives `filters` and emits `Partial<CardFilters>` updates. All filter state management stays in `Library.tsx` so the toolbar is stateless (except local search debounce and popover open states).
+- **Tag combobox from current data**: Tags for the combobox are derived from the current page's `libraryCards` rather than a separate API call. Pragmatic tradeoff for MVP — tags aren't pre-defined entities in the schema.
+- **Hybrid card count**: `useCardCount` avoids unnecessary API calls by checking the Zustand store first. Only fetches when the Library page hasn't been visited yet in the session.
+
+### Quality gates
 - TypeScript strict: passing (0 errors)
+- ESLint: clean (0 warnings)
 - Vitest: 28/28 tests passing (8 auth + 8 cards + 12 library)
-- Remaining: Tasks 4-8 (Library integration, Generate→Export, nav badge, quality gates, docs)
+- Vite build: succeeds
+- Bundle: Library chunk 124.6 KB (37.1 KB gzip, up from 28.8 KB due to Calendar/Command toolbar deps)
