@@ -2,8 +2,10 @@ import { Link, Outlet, useLocation } from "react-router";
 import { useState } from "react";
 import { useAuthStore } from "@/stores/auth";
 import { useUsage } from "@/lib/hooks/useUsage";
+import { useCardCount } from "@/lib/hooks/useCardCount";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -41,9 +43,11 @@ const NAV_ITEMS = [
 function NavItems({
   pathname,
   onNavigate,
+  cardCount,
 }: {
   pathname: string;
   onNavigate?: () => void;
+  cardCount?: number | null;
 }) {
   return (
     <nav className="flex flex-col gap-1">
@@ -64,6 +68,17 @@ function NavItems({
           >
             <Icon className="h-4 w-4" />
             {label}
+            {label === "Library" && cardCount != null && cardCount > 0 && (
+              <Badge
+                variant="secondary"
+                className={cn(
+                  "ml-auto h-5 min-w-5 justify-center px-1.5 text-[10px] tabular-nums",
+                  isActive && "bg-primary-foreground/20 text-primary-foreground",
+                )}
+              >
+                {cardCount > 999 ? "999+" : cardCount}
+              </Badge>
+            )}
           </Link>
         );
       })}
@@ -130,6 +145,7 @@ function UserMenu() {
 export default function AppLayout() {
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const cardCount = useCardCount();
 
   return (
     <div className="flex h-screen">
@@ -143,7 +159,7 @@ export default function AppLayout() {
         </div>
         <Separator />
         <div className="flex-1 overflow-y-auto p-4">
-          <NavItems pathname={pathname} />
+          <NavItems pathname={pathname} cardCount={cardCount} />
         </div>
         <Separator />
         <div className="px-4 pt-3">
@@ -177,6 +193,7 @@ export default function AppLayout() {
                 <NavItems
                   pathname={pathname}
                   onNavigate={() => setMobileOpen(false)}
+                  cardCount={cardCount}
                 />
               </div>
               <Separator />
