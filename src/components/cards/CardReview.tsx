@@ -17,6 +17,7 @@ import {
   ChevronDown,
   AlertTriangle,
   CheckCircle2,
+  Download,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -183,6 +184,7 @@ interface CardReviewProps {
   unsuitable: UnsuitableContent[];
   response: GenerateResponse;
   onGenerateMore: () => void;
+  onExportSelected?: () => void;
 }
 
 export function CardReview({
@@ -192,6 +194,7 @@ export function CardReview({
   unsuitable,
   response,
   onGenerateMore,
+  onExportSelected,
 }: CardReviewProps) {
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const {
@@ -221,6 +224,12 @@ export function CardReview({
           </span>
         )}
         <div className="ml-auto flex gap-2">
+          {onExportSelected && selectedCardIds.size > 0 && (
+            <Button variant="default" size="sm" className="gap-1.5" onClick={onExportSelected}>
+              <Download className="h-3.5 w-3.5" />
+              Export {selectedCardIds.size}
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={onGenerateMore}>
             Generate more
           </Button>

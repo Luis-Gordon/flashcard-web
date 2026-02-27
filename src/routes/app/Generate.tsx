@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { useCards } from "@/lib/hooks/useCards";
+import { useNavigate } from "react-router";
+import { useCards, useExportCards } from "@/lib/hooks/useCards";
 import { GenerateForm } from "@/components/cards/GenerateForm";
 import { CardReview } from "@/components/cards/CardReview";
 import { UpgradeModal } from "@/components/billing/UpgradeModal";
@@ -17,6 +18,8 @@ export default function Generate() {
     selectedCardIds,
   } = useCards();
 
+  const navigate = useNavigate();
+  const { setExportCards } = useExportCards();
   const [showUpgrade, setShowUpgrade] = useState(false);
 
   // Track whether to show the form or review panel
@@ -32,6 +35,12 @@ export default function Generate() {
     }
     prevHasResults.current = hasResults;
   }, [hasResults]);
+
+  const handleExportSelected = () => {
+    const selected = pendingCards.filter((c) => selectedCardIds.has(c.id));
+    setExportCards(selected);
+    navigate("/app/export");
+  };
 
   const showReview = hasResults && !forceForm;
 
@@ -54,6 +63,7 @@ export default function Generate() {
           unsuitable={unsuitableContent}
           response={lastGenerateResponse}
           onGenerateMore={() => setForceForm(true)}
+          onExportSelected={handleExportSelected}
         />
       ) : (
         <Card>
