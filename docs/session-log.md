@@ -160,3 +160,30 @@
 - Vitest: 24/24 tests passing (8 auth + 8 cards + 8 library)
 - Vite build: succeeds
 - Bundle: Library chunk 28.8 KB (9.5 KB gzip), index chunk unchanged at ~581 KB
+
+## Session 7 — 2026-02-27 — Phase 3C: Library Filters, Undo Delete, Export Actions (in progress)
+
+### What was done (Batch 1 of 3)
+
+**Task 1 — Domain constants extraction:**
+- Created `src/lib/constants/domains.ts` with shared `DOMAIN_LABELS` and `DOMAIN_COLORS` maps.
+- Updated `LibraryCardItem.tsx` to import from shared module (removed 25 lines of inline definitions).
+
+**Task 2 — Undo delete store actions (TDD):**
+- Added `removeLibraryCardLocally()` and `restoreLibraryCard()` to card store. `removeLocally` strips a card from state synchronously and returns it with its original index; `restore` splices it back.
+- Added `useLibraryUndoDelete` hook selector.
+- 4 new unit tests (remove + return card/index, null for unknown ID, clears selection, restore at correct index).
+
+**Task 3 — LibraryToolbar component:**
+- Created `src/components/cards/LibraryToolbar.tsx` — controlled filter toolbar with:
+  - Domain select (All + 10 domains)
+  - Debounced search input (300ms, local state for responsiveness)
+  - Tag combobox (derived from current page's cards, Popover + Command)
+  - Date range pickers (From/To with Calendar, mutual constraints)
+  - Sort select (Newest/Oldest/By domain)
+  - Active filter pills with individual clear buttons + "Clear all"
+
+### Quality gates (checkpoint)
+- TypeScript strict: passing (0 errors)
+- Vitest: 28/28 tests passing (8 auth + 8 cards + 12 library)
+- Remaining: Tasks 4-8 (Library integration, Generate→Export, nav badge, quality gates, docs)
