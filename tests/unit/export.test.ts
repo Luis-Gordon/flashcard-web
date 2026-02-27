@@ -226,3 +226,42 @@ describe("exportJson", () => {
     expect(content).not.toMatch(/^\[\n\s+{/);
   });
 });
+
+// ── APKG Schema Helpers ────────────────────────────────────────
+
+describe("APKG schema helpers", () => {
+  const importSchema = () => import("@/lib/apkg/schema");
+
+  test("generateGuid produces 10-character strings", async () => {
+    const { generateGuid } = await importSchema();
+    const guid = generateGuid();
+    expect(guid).toHaveLength(10);
+  });
+
+  test("generateGuid produces unique values", async () => {
+    const { generateGuid } = await importSchema();
+    const guids = new Set(Array.from({ length: 100 }, () => generateGuid()));
+    // With 90-char alphabet and 10 chars, collisions are astronomically unlikely
+    expect(guids.size).toBe(100);
+  });
+
+  test("fieldChecksum is deterministic", async () => {
+    const { fieldChecksum } = await importSchema();
+    const a = fieldChecksum("Hello, world!");
+    const b = fieldChecksum("Hello, world!");
+    expect(a).toBe(b);
+  });
+
+  test("fieldChecksum produces distinct values for different inputs", async () => {
+    const { fieldChecksum } = await importSchema();
+    const a = fieldChecksum("Hello");
+    const b = fieldChecksum("World");
+    expect(a).not.toBe(b);
+  });
+
+  test("generateId produces unique values", async () => {
+    const { generateId } = await importSchema();
+    const ids = new Set(Array.from({ length: 100 }, () => generateId()));
+    expect(ids.size).toBe(100);
+  });
+});
