@@ -2,15 +2,16 @@
 React SPA for card generation, library management, .apkg export, and billing. Vite + TypeScript + Cloudflare Workers.
 
 ## Current Status
-- **Phase**: 2 — complete. Card generation form, review/edit UI, usage display, upgrade modal, code splitting.
+- **Phase**: 3 — in progress. M1 (backend PATCH + filters) and M2+M3 (shared infra + library core) complete.
+- **Library page**: Paginated grid/list view, inline editing, bulk delete, domain badges, 3 empty states. Settings store persists view mode.
 - **Backend prerequisite**: Phase 5b billing migration must be deployed to production before web app launch.
-- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (16/16 tests), build succeeds.
+- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (24/24 tests), build succeeds.
 
 ## Next Session Tasks
-1. **Phase 3: Card library** — Library page with paginated grid, search/filter by domain, bulk actions
-2. **Phase 3: .apkg export** — Deck builder UI, client-side .apkg generation (sql.js WASM + JSZip)
-3. **Staging deployment** — Deploy to Cloudflare Workers, test against backend staging API
-4. **End-to-end auth test** — Wire up real Supabase project credentials, verify login/signup flow
+1. **Phase 3C: Library filters + polish** — LibraryToolbar (domain/search/tag/date filters), undo delete, "Export selected" bulk action, card count badge in nav
+2. **Phase 3D: Export page** — CSV/Markdown/JSON exporters, Export.tsx with format selector + options + preview
+3. **Phase 3E: APKG export** — sql.js WASM builder, .apkg format, Generate→Export flow, keyboard shortcuts
+4. **Staging deployment** — Deploy to Cloudflare Workers, test against backend staging API
 
 ## CRITICAL Constraints
 - **NEVER** handle credit card details — Stripe Checkout (redirect) only
