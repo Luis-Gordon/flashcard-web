@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useLibrary, useLibrarySelection, useLibraryUndoDelete, useExportCards } from "@/lib/hooks/useCards";
 import { useSettingsStore } from "@/stores/settings";
@@ -68,6 +68,18 @@ export default function Library() {
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [currentFilters, setCurrentFilters] = useState<CardFilters>(DEFAULT_FILTERS);
 
+  const handleToggleSelect = useCallback((id: string) => {
+    toggleLibrarySelection(id);
+  }, [toggleLibrarySelection]);
+
+  const handleEdit = useCallback((id: string) => {
+    setEditingCardId(id);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingCardId(null);
+  }, []);
+
   useEffect(() => {
     fetchLibrary(currentFilters);
   }, [currentFilters, fetchLibrary]);
@@ -100,7 +112,7 @@ export default function Library() {
     Map<string, { card: LibraryCard; index: number; timeoutId: ReturnType<typeof setTimeout> }>
   >(new Map());
 
-  const handleDelete = (id: string) => {
+  const handleDelete = useCallback((id: string) => {
     const result = removeLibraryCardLocally(id);
     if (!result) return;
 
@@ -132,7 +144,7 @@ export default function Library() {
       },
       duration: 5000,
     });
-  };
+  }, [removeLibraryCardLocally, restoreLibraryCard]);
 
   // Flush pending deletes on unmount
   useEffect(() => {
@@ -147,7 +159,7 @@ export default function Library() {
     };
   }, []);
 
-  const handleSave = async (id: string, updates: UpdateCardRequest) => {
+  const handleSave = useCallback(async (id: string, updates: UpdateCardRequest) => {
     try {
       await updateLibraryCard(id, updates);
       setEditingCardId(null);
@@ -155,7 +167,7 @@ export default function Library() {
     } catch {
       toast.error("Failed to update card");
     }
-  };
+  }, [updateLibraryCard]);
 
   const handleBulkDelete = async () => {
     const ids = [...librarySelectedIds];
@@ -362,11 +374,11 @@ export default function Library() {
               card={card}
               isSelected={librarySelectedIds.has(card.id)}
               isEditing={editingCardId === card.id}
-              onToggleSelect={() => toggleLibrarySelection(card.id)}
-              onEdit={() => setEditingCardId(card.id)}
-              onDelete={() => handleDelete(card.id)}
+              onToggleSelect={handleToggleSelect}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
               onSave={handleSave}
-              onCancelEdit={() => setEditingCardId(null)}
+              onCancelEdit={handleCancelEdit}
             />
           ))}
         </div>
@@ -381,11 +393,11 @@ export default function Library() {
               card={card}
               isSelected={librarySelectedIds.has(card.id)}
               isEditing={editingCardId === card.id}
-              onToggleSelect={() => toggleLibrarySelection(card.id)}
-              onEdit={() => setEditingCardId(card.id)}
-              onDelete={() => handleDelete(card.id)}
+              onToggleSelect={handleToggleSelect}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
               onSave={handleSave}
-              onCancelEdit={() => setEditingCardId(null)}
+              onCancelEdit={handleCancelEdit}
             />
           ))}
         </div>

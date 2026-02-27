@@ -268,3 +268,25 @@
 - Vitest: 51/51 tests passing (8 auth + 8 cards + 12 library + 23 export)
 - Vite build: succeeds
 - Bundle: Export chunk 12.3 KB, APKG builder chunk 143.5 KB (code-split), index chunk ~587 KB
+
+## Session 9 — 2026-02-27 — Perf: Fix Zustand Re-render Cascade
+
+### What was done
+
+**Audit fixes C1, C2, H1 — Zustand selector + React.memo + useCallback:**
+- **`useCards.ts`**: Wrapped all 6 selector hooks with `useShallow` from `zustand/react/shallow`. Prevents cascading re-renders when unrelated store fields change — selectors now do shallow comparison of returned object values instead of reference equality.
+- **`LibraryCardItem.tsx`**: Wrapped export in `React.memo`. Changed callback props (`onToggleSelect`, `onEdit`, `onDelete`) from `() => void` to `(id: string) => void` so parent can pass a single stable reference instead of per-card closures. Component calls callbacks with `card.id` internally.
+- **`CardReview.tsx`**: Wrapped internal `CardItem` in `React.memo` with same ID-based callback pattern. Extracted 5 stable `useCallback` handlers (`handleToggleSelect`, `handleEdit`, `handleDelete`, `handleSave`, `handleCancelEdit`) to replace inline arrow functions in `.map()`.
+- **`Library.tsx`**: Extracted `handleToggleSelect`, `handleEdit`, `handleCancelEdit` as `useCallback`. Wrapped existing `handleDelete` and `handleSave` in `useCallback`. Replaced all inline arrow callbacks in both grid and list `.map()` renders with stable references.
+
+### Architecture decisions
+- **`useShallow` over individual selectors**: Wrapping each hook's selector with `useShallow` is a one-line change that fixes the problem without modifying any consumer destructuring patterns. The alternative (15+ individual `useCardStore(s => s.foo)` calls) would require changing every consumer.
+- **ID-based callbacks**: Instead of `onDelete={() => handleDelete(card.id)}` (new closure per card per render), callbacks accept `(id: string)` and the child calls `onCallback(card.id)`. This ensures `React.memo`'s shallow prop comparison sees the same function references across renders.
+- **Three-layer prevention**: `useShallow` (store→hook), `React.memo` (parent→child), and `useCallback` (callback identity) work together — all three layers are needed to fully eliminate the O(N) re-render cascade.
+
+### Quality gates
+- TypeScript strict: passing (0 errors)
+- ESLint: clean (0 warnings)
+- Vitest: 51/51 tests passing (8 auth + 8 cards + 12 library + 23 export)
+- Vite build: succeeds
+- Bundle: unchanged (useShallow is tree-shaken from existing zustand dep)

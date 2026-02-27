@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 import type { Card, EditableCard, RejectedCard, UnsuitableContent, GenerateResponse } from "@/types/cards";
 import { useCardActions } from "@/lib/hooks/useCards";
 import { SanitizedHTML } from "@/components/cards/SanitizedHTML";
@@ -27,15 +27,15 @@ import {
 interface CardItemProps {
   card: EditableCard;
   isSelected: boolean;
-  onToggleSelect: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onToggleSelect: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
   isEditing: boolean;
   onSave: (id: string, updates: Partial<Pick<EditableCard, "front" | "back" | "tags" | "notes">>) => void;
   onCancelEdit: () => void;
 }
 
-function CardItem({
+const CardItem = memo(function CardItem({
   card,
   isSelected,
   onToggleSelect,
@@ -54,7 +54,7 @@ function CardItem({
       <div className="mb-3 flex items-start gap-3">
         <Checkbox
           checked={isSelected}
-          onCheckedChange={onToggleSelect}
+          onCheckedChange={() => onToggleSelect(card.id)}
           className="mt-0.5"
         />
         <div className="flex-1 space-y-2">
@@ -103,7 +103,7 @@ function CardItem({
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={onEdit}
+            onClick={() => onEdit(card.id)}
           >
             <Pencil className="h-3.5 w-3.5" />
             <span className="sr-only">Edit</span>
@@ -112,7 +112,7 @@ function CardItem({
             variant="ghost"
             size="icon"
             className="h-7 w-7 text-destructive hover:text-destructive"
-            onClick={onDelete}
+            onClick={() => onDelete(card.id)}
           >
             <Trash2 className="h-3.5 w-3.5" />
             <span className="sr-only">Delete</span>
@@ -121,7 +121,7 @@ function CardItem({
       </div>
     </div>
   );
-}
+});
 
 // ---------------------------------------------------------------------------
 // Quality filter section (rejected / unsuitable)
@@ -208,6 +208,27 @@ export function CardReview({
 
   const allSelected = cards.length > 0 && selectedCardIds.size === cards.length;
 
+  const handleToggleSelect = useCallback((id: string) => {
+    toggleCardSelection(id);
+  }, [toggleCardSelection]);
+
+  const handleEdit = useCallback((id: string) => {
+    setEditingCardId(id);
+  }, []);
+
+  const handleDelete = useCallback((id: string) => {
+    removePendingCard(id);
+  }, [removePendingCard]);
+
+  const handleSave = useCallback((id: string, updates: Partial<Pick<EditableCard, "front" | "back" | "tags" | "notes">>) => {
+    updatePendingCard(id, updates);
+    setEditingCardId(null);
+  }, [updatePendingCard]);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingCardId(null);
+  }, []);
+
   return (
     <div className="space-y-4">
       {/* Summary bar */}
@@ -270,15 +291,12 @@ export function CardReview({
             key={card.id}
             card={card}
             isSelected={selectedCardIds.has(card.id)}
-            onToggleSelect={() => toggleCardSelection(card.id)}
-            onEdit={() => setEditingCardId(card.id)}
-            onDelete={() => removePendingCard(card.id)}
+            onToggleSelect={handleToggleSelect}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
             isEditing={editingCardId === card.id}
-            onSave={(id, updates) => {
-              updatePendingCard(id, updates);
-              setEditingCardId(null);
-            }}
-            onCancelEdit={() => setEditingCardId(null)}
+            onSave={handleSave}
+            onCancelEdit={handleCancelEdit}
           />
         ))}
       </div>

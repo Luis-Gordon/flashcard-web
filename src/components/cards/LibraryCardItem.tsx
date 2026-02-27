@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { SanitizedHTML } from "@/components/cards/SanitizedHTML";
 import { CardEditor } from "@/components/cards/CardEditor";
@@ -15,14 +15,14 @@ interface LibraryCardItemProps {
   card: LibraryCard;
   isSelected: boolean;
   isEditing: boolean;
-  onToggleSelect: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onToggleSelect: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
   onSave: (id: string, updates: UpdateCardRequest) => void;
   onCancelEdit: () => void;
 }
 
-export function LibraryCardItem({
+export const LibraryCardItem = memo(function LibraryCardItem({
   card,
   isSelected,
   isEditing,
@@ -62,7 +62,7 @@ export function LibraryCardItem({
         <div className="mb-3 flex items-center gap-2">
           <Checkbox
             checked={isSelected}
-            onCheckedChange={onToggleSelect}
+            onCheckedChange={() => onToggleSelect(card.id)}
             className="shrink-0"
           />
           <Badge
@@ -79,7 +79,7 @@ export function LibraryCardItem({
               variant="ghost"
               size="icon"
               className="h-7 w-7"
-              onClick={onEdit}
+              onClick={() => onEdit(card.id)}
             >
               <Pencil className="h-3.5 w-3.5" />
               <span className="sr-only">Edit</span>
@@ -88,7 +88,7 @@ export function LibraryCardItem({
               variant="ghost"
               size="icon"
               className="h-7 w-7 text-destructive hover:text-destructive"
-              onClick={onDelete}
+              onClick={() => onDelete(card.id)}
             >
               <Trash2 className="h-3.5 w-3.5" />
               <span className="sr-only">Delete</span>
@@ -151,4 +151,4 @@ export function LibraryCardItem({
       </CardContent>
     </Card>
   );
-}
+});
