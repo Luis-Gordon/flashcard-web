@@ -172,3 +172,57 @@ describe("exportMarkdown", () => {
     expect(result.content).toContain("\n---\n");
   });
 });
+
+// ── JSON Formatter ─────────────────────────────────────────────
+
+describe("exportJson", () => {
+  const importJson = () => import("@/lib/export/json");
+
+  test("exports clean card objects with only useful fields", async () => {
+    const { exportJson } = await importJson();
+    const result = exportJson([makeCard()], {});
+    const parsed = JSON.parse(result.content as string);
+    const card = parsed[0];
+    expect(card).toHaveProperty("front");
+    expect(card).toHaveProperty("back");
+    expect(card).toHaveProperty("tags");
+    expect(card).toHaveProperty("notes");
+    expect(card).toHaveProperty("card_type");
+  });
+
+  test("strips internal fields from LibraryCard", async () => {
+    const { exportJson } = await importJson();
+    const result = exportJson([makeLibraryCard()], {});
+    const parsed = JSON.parse(result.content as string);
+    const card = parsed[0];
+    // Internal fields should be stripped
+    expect(card).not.toHaveProperty("user_id");
+    expect(card).not.toHaveProperty("generation_request_id");
+    expect(card).not.toHaveProperty("is_deleted");
+    expect(card).not.toHaveProperty("created_at");
+    expect(card).not.toHaveProperty("updated_at");
+    expect(card).not.toHaveProperty("metadata");
+    expect(card).not.toHaveProperty("confidence_scores");
+    expect(card).not.toHaveProperty("source_quote");
+    expect(card).not.toHaveProperty("id");
+    // But keeps domain
+    expect(card).toHaveProperty("domain", "general");
+  });
+
+  test("pretty prints when specified", async () => {
+    const { exportJson } = await importJson();
+    const result = exportJson([makeCard()], { prettyPrint: true });
+    const content = result.content as string;
+    // Pretty printed JSON has newlines and indentation
+    expect(content).toContain("\n");
+    expect(content).toMatch(/^\[\n\s+{/);
+  });
+
+  test("minified by default", async () => {
+    const { exportJson } = await importJson();
+    const result = exportJson([makeCard()], {});
+    const content = result.content as string;
+    // Minified JSON has no leading whitespace indentation
+    expect(content).not.toMatch(/^\[\n\s+{/);
+  });
+});
