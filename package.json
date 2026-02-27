@@ -15,7 +15,7 @@
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "typecheck": "tsc --noEmit",
-    "postinstall": "cp node_modules/sql.js/dist/sql-wasm.wasm public/sql-wasm.wasm"
+    "postinstall": "patch-package && cp node_modules/sql.js/dist/sql-wasm.wasm public/sql-wasm.wasm"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -54,6 +54,7 @@
     "eslint": "^10.0.1",
     "globals": "^17.3.0",
     "jsdom": "^28.1.0",
+    "patch-package": "^8.0.1",
     "shadcn": "^3.8.5",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.2.0",
