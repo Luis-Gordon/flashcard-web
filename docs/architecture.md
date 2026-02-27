@@ -51,13 +51,13 @@ src/
 │       ├── AppLayout.tsx       # Sidebar nav + usage display + card count badge + outlet
 │       ├── Generate.tsx        # Form ↔ review toggle + export selected
 │       ├── Library.tsx         # Paginated grid/list, filters, undo delete, export selected
-│       ├── Export.tsx          # Placeholder (Phase 3D)
+│       ├── Export.tsx          # Format selector, options, preview, download
 │       ├── Billing.tsx         # Placeholder (Phase 4)
 │       └── Settings.tsx        # Placeholder (Phase 5)
 ├── components/
 │   ├── AuthGuard.tsx           # Route guard: redirect if unauthenticated
 │   ├── MarketingLayout.tsx     # Header + footer for public pages
-│   ├── ui/                     # shadcn/ui components (29 installed)
+│   ├── ui/                     # shadcn/ui components (30 installed)
 │   ├── cards/
 │   │   ├── SanitizedHTML.tsx   # Shared DOMPurify HTML renderer (fc-* safe)
 │   │   ├── GenerateForm.tsx    # Domain/style/difficulty form + content textarea
@@ -77,6 +77,18 @@ src/
 │   ├── validation/
 │   │   ├── auth.ts             # Zod schemas: loginSchema, signupSchema
 │   │   └── cards.ts            # generateFormSchema, CARD_DOMAINS
+│   ├── export/
+│   │   ├── types.ts            # ExportResult, ExportFormatConfig, ExportOptionField
+│   │   ├── download.ts         # triggerDownload() browser download utility
+│   │   ├── html.ts             # stripHtml() shared helper for text formatters
+│   │   ├── csv.ts              # CSV formatter (BOM, escaping, separator options)
+│   │   ├── markdown.ts         # Obsidian SR format Markdown formatter
+│   │   ├── json.ts             # JSON formatter with field stripping
+│   │   ├── apkg.ts             # APKG adapter (lazy-imports builder, maps Card → ApkgCard)
+│   │   └── index.ts            # EXPORT_FORMATS registry + dispatchExport() dispatcher
+│   ├── apkg/
+│   │   ├── schema.ts           # Anki SQLite schema v11 + helpers (GUID, checksum, ID gen)
+│   │   └── builder.ts          # sql.js WASM + JSZip .apkg generator
 │   └── hooks/
 │       ├── useCards.ts         # Selectors: useCards, useCardActions, useLibrary, useLibrarySelection, useLibraryUndoDelete, useExportCards
 │       ├── useCardCount.ts     # Hybrid hook: store total → API fallback (nav badge)
@@ -136,6 +148,15 @@ src/
 - localStorage key: `memogenesis-settings`
 - Stores `libraryViewMode` (grid/list) and `recentDeckNames` (max 5, MRU order)
 
+### Export Page
+- **Entry points**: Library → "Export selected" and Generate → "Export N" both transfer cards via `setExportCards()` in the Zustand store, then navigate to `/app/export`.
+- **Format registry**: `EXPORT_FORMATS` array in `src/lib/export/index.ts` defines 4 formats (APKG, CSV, Markdown, JSON) with metadata, options schema, and icons.
+- **Dynamic options**: Options panel renders from the registry's `options` array — `text` → Input, `boolean` → Checkbox, `select` → Select. Adding a format requires zero UI code changes.
+- **Preview**: Collapsible preview generates output for first 3 cards in chosen format via `dispatchExport()`.
+- **APKG code splitting**: `dispatchExport("apkg", ...)` uses `await import("./apkg")` → Vite auto-splits sql.js + JSZip into a separate ~143 KB chunk loaded only on demand.
+- **Recent deck names**: Dropdown populated from `useSettingsStore.recentDeckNames` (max 5, MRU order). Saved on successful export.
+- **Download**: `triggerDownload()` creates object URL → hidden `<a>` click → revoke. Works for both string (CSV/Markdown/JSON) and ArrayBuffer (APKG).
+
 ### Code Splitting
 - All 11 route pages are lazy-loaded via `React.lazy()` + `<Suspense>`
 - `AppLayout` and `AuthGuard` remain eagerly loaded (needed immediately)
@@ -155,7 +176,7 @@ src/
 - Output: `public/{page}.html` (gitignored build artifacts)
 
 ## Not Yet Implemented
-- .apkg export with sql.js WASM + deck builder UI (Phase 3D/E)
-- CSV/Markdown/JSON export formats (Phase 3D)
+- Keyboard shortcuts for export workflow (Phase 3F)
+- Staging deployment + backend integration testing (Phase 3F)
 - Stripe Checkout + billing portal (Phase 4)
 - Account settings + data export (Phase 5)

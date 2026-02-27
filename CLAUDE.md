@@ -2,16 +2,15 @@
 React SPA for card generation, library management, .apkg export, and billing. Vite + TypeScript + Cloudflare Workers.
 
 ## Current Status
-- **Phase**: 3 — M4 complete. Library page fully functional with filters, undo delete, export actions, nav badge.
+- **Phase**: 3 — M5+M6 complete. Export page with 4 formats (APKG, CSV, Markdown, JSON), format registry, preview, download.
+- **Export page**: Format selector (2×2 radio cards), dynamic options panel, collapsible preview, recent deck names, APKG builder (sql.js WASM + JSZip), code-split APKG chunk (~143 KB).
 - **Library page**: Paginated grid/list view, inline editing, bulk delete, domain badges, 3 empty states, filter toolbar (domain/search/tag/date/sort), undo-able single delete, export selected, card count badge in sidebar nav.
 - **Generate page**: Export button in CardReview summary bar → transfers selected cards to Export page.
 - **Backend prerequisite**: Phase 5b billing migration must be deployed to production before web app launch.
-- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (28/28 tests), build succeeds.
+- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (51/51 tests), build succeeds.
 
 ## Next Session Tasks
-1. **Phase 3D: Export page** — CSV/Markdown/JSON exporters, Export.tsx with format selector + options + preview
-2. **Phase 3E: APKG export** — sql.js WASM builder, .apkg format, Generate→Export flow, keyboard shortcuts
-3. **Phase 3F: Polish** — keyboard shortcuts, staging deployment, test against backend staging API
+1. **Phase 3F: Polish** — keyboard shortcuts, staging deployment, test against backend staging API
 
 ## CRITICAL Constraints
 - **NEVER** handle credit card details — Stripe Checkout (redirect) only

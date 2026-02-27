@@ -214,3 +214,57 @@
 - Vitest: 28/28 tests passing (8 auth + 8 cards + 12 library)
 - Vite build: succeeds
 - Bundle: Library chunk 124.6 KB (37.1 KB gzip, up from 28.8 KB due to Calendar/Command toolbar deps)
+
+## Session 8 — 2026-02-27 — Phase 3D: Export Page (M5+M6)
+
+### What was done
+
+**Task 1 — Export types & download utility:**
+- Created `src/lib/export/types.ts` — `ExportResult`, `ExportFormatConfig`, `ExportOptionField` interfaces.
+- Created `src/lib/export/download.ts` — `triggerDownload()` using object URL → hidden `<a>` click → revoke.
+
+**Task 2 — CSV formatter (TDD):**
+- 10 tests: BOM, tab separator, comma/quote/newline escaping, tag joining, include/exclude notes/tags, HTML stripping, filename/mimeType.
+- Created `src/lib/export/html.ts` — shared `stripHtml()` helper for CSV and Markdown.
+- Created `src/lib/export/csv.ts` — configurable separator, optional columns, `\uFEFF` BOM for Excel.
+
+**Task 3 — Markdown formatter (TDD):**
+- 4 tests: Obsidian SR format (Q/?/A), HTML stripping, tags as HTML comment, card separators.
+- Created `src/lib/export/markdown.ts` — Obsidian Spaced Repetition plugin format.
+
+**Task 4 — JSON formatter (TDD):**
+- 4 tests: clean fields, internal field stripping, pretty print, minified default.
+- Created `src/lib/export/json.ts` — explicit property picking (avoids Card index signature issues).
+
+**Task 5 — Export registry & dispatcher:**
+- Created `src/lib/export/index.ts` — `EXPORT_FORMATS` config array (4 formats with metadata + options schema) + `dispatchExport()` router.
+- APKG case uses `await import("./apkg")` for code splitting.
+
+**Task 6 — Export page UI:**
+- Replaced `Export.tsx` placeholder with full export page: empty state with CTAs, 2×2 format selector radio cards, dynamic options panel (text/boolean/select from registry), collapsible preview (first 3 cards), recent deck names dropdown, full-width export button with spinner state.
+
+**Task 7 — APKG builder (ported from spike):**
+- Ported `schema.ts` verbatim from `flashcard-backend/docs/spikes/apkg-code/`.
+- Adapted `generator.ts` → `builder.ts`: changed from `sql-asm.js` to WASM build with `locateFile` for browser loading.
+- Created `src/lib/export/apkg.ts` — adapter that maps `Card | LibraryCard` → `ApkgCard` and lazy-imports builder.
+- 5 schema helper tests: GUID length/uniqueness, checksum determinism/distinctness, ID uniqueness.
+
+### New files (10)
+- `src/lib/export/types.ts`, `download.ts`, `html.ts`, `csv.ts`, `markdown.ts`, `json.ts`, `apkg.ts`, `index.ts`
+- `src/lib/apkg/schema.ts`, `builder.ts`
+
+### New dependencies
+- `@types/sql.js` — type declarations for sql.js WASM
+
+### Architecture decisions
+- **Shared `stripHtml()` utility**: Extracted to `html.ts` rather than putting it in `csv.ts` and importing cross-formatter. Uses `[^\S\n]+` regex to collapse horizontal whitespace while preserving intentional newlines.
+- **Explicit property picking for JSON**: `Card` has an index signature (`[key: string]: unknown`) which makes `Object.entries()` include all properties. JSON formatter uses explicit destructuring to pick only user-facing fields.
+- **APKG code splitting confirmed**: Build output shows `builder-*.js` at 143 KB and `apkg-*.js` at 0.65 KB as separate chunks. The heavy sql.js + JSZip dependencies are only loaded when a user exports to APKG.
+- **Format registry drives UI**: Adding a new export format only requires adding an entry to `EXPORT_FORMATS` and a formatter function — the Export page renders options dynamically from the registry.
+
+### Quality gates
+- TypeScript strict: passing (0 errors)
+- ESLint: clean (0 warnings)
+- Vitest: 51/51 tests passing (8 auth + 8 cards + 12 library + 23 export)
+- Vite build: succeeds
+- Bundle: Export chunk 12.3 KB, APKG builder chunk 143.5 KB (code-split), index chunk ~587 KB
