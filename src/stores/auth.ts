@@ -18,21 +18,29 @@ interface AuthState {
   signOut: () => Promise<void>;
 }
 
+let authUnsubscribe: (() => void) | null = null;
+
 export const useAuthStore = create<AuthState>((set) => ({
   session: null,
   user: null,
   isLoading: true,
 
   initialize: () => {
+    // Clean up previous listener (hot reload / re-init safety)
+    authUnsubscribe?.();
+
     // Get current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       set({ session, user: session?.user ?? null, isLoading: false });
     });
 
     // Listen for auth state changes (login, logout, token refresh)
-    supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       set({ session, user: session?.user ?? null, isLoading: false });
     });
+    authUnsubscribe = () => subscription.unsubscribe();
   },
 
   signIn: async (email, password) => {

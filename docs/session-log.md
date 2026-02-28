@@ -450,3 +450,40 @@
 - ESLint: clean (0 warnings)
 - Vitest: 96/96 tests passing (62 → 96, +34 new tests)
 - Vite build: succeeds
+
+## Session 15 — 2026-02-28 — Audit Batch 7: Remaining Fixes (M3, M5, M7, M9, L5, L6)
+
+### What was done
+
+**M3 — Bulk delete error handling + rollback:**
+- Refactored `bulkDeleteLibraryCards` in `stores/cards.ts` from fire-then-update to optimistic removal with snapshot. On API failure, rolls back `libraryCards`, `librarySelectedIds`, and `libraryPagination`, then re-throws so the caller (`Library.tsx`) can display a toast.
+
+**M5 — Preserve ruby/furigana in text exports:**
+- Added regex to `stripHtml()` in `lib/export/html.ts` that converts `<ruby>kanji<rt>reading</rt></ruby>` → `kanji(reading)` before generic tag stripping. 3 tests added covering single, multi-ruby, and ruby-within-HTML cases.
+
+**M7 — Exhaustive default case in export dispatcher:**
+- Added TypeScript `never` exhaustive check as default case in `dispatchExport()` switch. Catches both compile-time (missing case for new union member) and runtime (bypassed type system) errors.
+
+**M9 — Auth listener leak prevention:**
+- Added module-scoped `authUnsubscribe` handle in `stores/auth.ts`. `initialize()` now calls it before re-subscribing, preventing listener accumulation on hot reload. 1 test added verifying double-init cleans up the first listener.
+
+**L5 — Include card ID in JSON export:**
+- Added `id` field to `cleanCard()` in `lib/export/json.ts`. Updated 2 existing tests that asserted `id` was absent; now verify its presence and correct value.
+
+**L6 — Remove phantom Default deck from APKG:**
+- Removed hardcoded `Default` deck (id=1) from `decks` JSON in `lib/apkg/schema.ts`. Updated `conf.activeDecks` and `conf.curDeck` to reference `deckId` instead of `1`. `dconf` entry (scheduling config profile) retained. 1 test added verifying no "Default" deck name in col params.
+
+### Items triaged as skip/defer
+- M8 (skip): GUID alphabet already correct (91 chars verified)
+- M10 (defer): Library.tsx refactoring — no user-facing impact
+- M11 (defer): Toolbar debounce double-update — negligible
+- M12 (defer): Export sub-component memo — imperceptible with 4 items
+- L4 (skip): Duplicate select-all — UX is fine
+- L7 (skip): Tag separators differ by format — intentional per-app convention
+- L8 (skip): tw-animate-css — no measurable impact
+
+### Quality gates
+- TypeScript strict: passing (0 errors)
+- ESLint: clean (0 warnings)
+- Vitest: 101/101 tests passing (96 → 101, +5 new tests)
+- Vite build: succeeds

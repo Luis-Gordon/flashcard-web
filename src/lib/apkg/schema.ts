@@ -147,8 +147,8 @@ export function buildColRow(options: ColRowOptions): {
   const nowMs = Date.now();
 
   const conf = JSON.stringify({
-    activeDecks: [1],
-    curDeck: 1,
+    activeDecks: [deckId],
+    curDeck: deckId,
     newSpread: 0,
     collapseTime: 1200,
     timeLim: 0,
@@ -214,23 +214,6 @@ export function buildColRow(options: ColRowOptions): {
   });
 
   const decks = JSON.stringify({
-    '1': {
-      id: 1,
-      name: 'Default',
-      mod: now,
-      usn: -1,
-      lrnToday: [0, 0],
-      revToday: [0, 0],
-      newToday: [0, 0],
-      timeToday: [0, 0],
-      collapsed: false,
-      browserCollapsed: false,
-      desc: '',
-      dyn: 0,
-      conf: 1,
-      extendNew: 10,
-      extendRev: 50,
-    },
     [deckId]: {
       id: deckId,
       name: deckName,

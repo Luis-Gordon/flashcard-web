@@ -38,6 +38,34 @@ function makeLibraryCard(overrides: Partial<LibraryCard> = {}): LibraryCard {
   };
 }
 
+// ── stripHtml ─────────────────────────────────────────────────
+
+describe("stripHtml", () => {
+  const importHtml = () => import("@/lib/export/html");
+
+  test("preserves furigana as kanji(reading)", async () => {
+    const { stripHtml } = await importHtml();
+    const result = stripHtml("<ruby>漢字<rt>かんじ</rt></ruby>");
+    expect(result).toBe("漢字(かんじ)");
+  });
+
+  test("preserves multiple ruby annotations inline", async () => {
+    const { stripHtml } = await importHtml();
+    const result = stripHtml(
+      "<ruby>日<rt>にち</rt></ruby><ruby>本<rt>ほん</rt></ruby>",
+    );
+    expect(result).toBe("日(にち)本(ほん)");
+  });
+
+  test("preserves furigana within surrounding HTML", async () => {
+    const { stripHtml } = await importHtml();
+    const result = stripHtml(
+      '<div class="fc-front"><ruby>食<rt>た</rt></ruby>べる</div>',
+    );
+    expect(result).toBe("食(た)べる");
+  });
+});
+
 // ── CSV Formatter ──────────────────────────────────────────────
 
 describe("exportCsv", () => {
@@ -183,6 +211,7 @@ describe("exportJson", () => {
     const result = exportJson([makeCard()], {});
     const parsed = JSON.parse(result.content as string);
     const card = parsed[0];
+    expect(card).toHaveProperty("id");
     expect(card).toHaveProperty("front");
     expect(card).toHaveProperty("back");
     expect(card).toHaveProperty("tags");
@@ -204,8 +233,8 @@ describe("exportJson", () => {
     expect(card).not.toHaveProperty("metadata");
     expect(card).not.toHaveProperty("confidence_scores");
     expect(card).not.toHaveProperty("source_quote");
-    expect(card).not.toHaveProperty("id");
-    // But keeps domain
+    // Keeps id for round-trip import + domain for categorization
+    expect(card).toHaveProperty("id", "lib-id-1");
     expect(card).toHaveProperty("domain", "general");
   });
 

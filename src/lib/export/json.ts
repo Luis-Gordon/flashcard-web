@@ -8,6 +8,7 @@ export interface JsonOptions {
 /** Pick only the user-facing fields from a card. */
 function cleanCard(card: Card | LibraryCard): Record<string, unknown> {
   const clean: Record<string, unknown> = {
+    id: card.id,
     front: card.front,
     back: card.back,
     card_type: card.card_type,

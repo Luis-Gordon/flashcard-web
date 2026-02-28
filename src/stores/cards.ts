@@ -215,18 +215,29 @@ export const useCardStore = create<CardState>((set, get) => ({
   },
 
   bulkDeleteLibraryCards: async (ids) => {
-    await api.deleteCards(ids);
+    // Snapshot for rollback
+    const { libraryCards, librarySelectedIds, libraryPagination } = get();
     const idSet = new Set(ids);
-    set((state) => ({
-      libraryCards: state.libraryCards.filter((c) => !idSet.has(c.id)),
+
+    // Optimistic removal
+    set({
+      libraryCards: libraryCards.filter((c) => !idSet.has(c.id)),
       librarySelectedIds: new Set(
-        [...state.librarySelectedIds].filter((selId) => !idSet.has(selId)),
+        [...librarySelectedIds].filter((selId) => !idSet.has(selId)),
       ),
       libraryPagination: {
-        ...state.libraryPagination,
-        total: Math.max(0, state.libraryPagination.total - ids.length),
+        ...libraryPagination,
+        total: Math.max(0, libraryPagination.total - ids.length),
       },
-    }));
+    });
+
+    try {
+      await api.deleteCards(ids);
+    } catch (error) {
+      // Rollback on failure
+      set({ libraryCards, librarySelectedIds, libraryPagination });
+      throw error;
+    }
   },
 
   toggleLibrarySelection: (id) =>

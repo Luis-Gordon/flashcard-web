@@ -84,5 +84,9 @@ export async function dispatchExport(
       return exportMarkdown(cards, options as { deckName: string });
     case "json":
       return exportJson(cards, options as { prettyPrint?: boolean });
+    default: {
+      const _exhaustive: never = format;
+      throw new Error(`Unknown export format: ${_exhaustive}`);
+    }
   }
 }

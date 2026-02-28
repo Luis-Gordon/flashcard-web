@@ -142,6 +142,39 @@ describe("useAuthStore", () => {
     expect(mockSignOut).toHaveBeenCalled();
   });
 
+  it("cleans up previous auth listener on re-initialize", async () => {
+    const firstUnsubscribe = vi.fn();
+    const secondUnsubscribe = vi.fn();
+
+    mockGetSession.mockResolvedValue({ data: { session: null } });
+    mockOnAuthStateChange
+      .mockReturnValueOnce({
+        data: { subscription: { unsubscribe: firstUnsubscribe } },
+      })
+      .mockReturnValueOnce({
+        data: { subscription: { unsubscribe: secondUnsubscribe } },
+      });
+
+    // First init
+    useAuthStore.getState().initialize();
+    await vi.waitFor(() => {
+      expect(useAuthStore.getState().isLoading).toBe(false);
+    });
+    expect(firstUnsubscribe).not.toHaveBeenCalled();
+
+    // Reset loading to detect second init completing
+    useAuthStore.setState({ isLoading: true });
+
+    // Second init should clean up the first listener
+    useAuthStore.getState().initialize();
+    await vi.waitFor(() => {
+      expect(useAuthStore.getState().isLoading).toBe(false);
+    });
+
+    expect(firstUnsubscribe).toHaveBeenCalledOnce();
+    expect(secondUnsubscribe).not.toHaveBeenCalled();
+  });
+
   it("updates state on auth state change", async () => {
     let authCallback: (event: string, session: Session | null) => void;
 

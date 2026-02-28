@@ -102,6 +102,31 @@ describe("generateApkg — database operations", () => {
     expect(hasName).toBe(true);
   });
 
+  test("INSERT INTO col does not contain a phantom Default deck", async () => {
+    const { generateApkg } = await importBuilder();
+    await generateApkg({ deckName: "Test Deck", cards: makeCards(1) });
+
+    const colCall = mockRun.mock.calls.find(
+      (c) => typeof c[0] === "string" && c[0].includes("INSERT INTO col"),
+    );
+    expect(colCall).toBeDefined();
+
+    // Find the decks JSON param (contains deck name)
+    const params = colCall![1] as unknown[];
+    const decksParam = params.find(
+      (p) => typeof p === "string" && p.includes("Test Deck"),
+    ) as string;
+    expect(decksParam).toBeDefined();
+
+    // Should not contain a separate "Default" deck entry
+    const parsed = JSON.parse(decksParam);
+    const deckNames = Object.values(parsed).map(
+      (d) => (d as { name: string }).name,
+    );
+    expect(deckNames).not.toContain("Default");
+    expect(deckNames).toContain("Test Deck");
+  });
+
   test("3 cards produce 3 INSERT INTO notes + 3 INSERT INTO cards", async () => {
     const { generateApkg } = await importBuilder();
     await generateApkg({ deckName: "Test", cards: makeCards(3) });
