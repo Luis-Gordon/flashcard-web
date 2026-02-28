@@ -290,3 +290,35 @@
 - Vitest: 51/51 tests passing (8 auth + 8 cards + 12 library + 23 export)
 - Vite build: succeeds
 - Bundle: unchanged (useShallow is tree-shaken from existing zustand dep)
+
+## Session 10 — 2026-02-28 — Audit Fix: API Contract Compliance (H2, M1)
+
+### What was done
+
+**H2 — 401 UNAUTHORIZED session clearing:**
+- Added `setOnUnauthorized()` registration and debounced `notifyUnauthorized()` to `src/lib/api.ts`. Module-scoped callback pattern keeps api.ts decoupled from auth/routing.
+- Wired handler in `src/main.tsx`: toasts "Session expired" + calls `signOut()`. AuthGuard then redirects to `/login`.
+- 1-second debounce flag prevents concurrent 401s from triggering multiple signOut() calls.
+
+**M1 — 429 RATE_LIMITED auto-retry:**
+- Added retry loop inside `apiRequest()`: up to 2 retries, `retry_after` capped at 60s, defaults to 1s when absent.
+- Abort-aware wait promise integrates with existing AbortController timeout as overall deadline.
+- Updated `GenerateForm.tsx` RATE_LIMITED toast — retries are now exhausted by the time callers see the error, so removed misleading "wait Xs" message.
+
+**Test infrastructure:**
+- Added `VITE_API_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` env vars to `vitest.config.ts` for tests that import `api.ts` directly.
+- Created `tests/unit/api.test.ts` with 10 tests covering 401 notification, debounce, 429 retry, cap, default, and abort behavior.
+
+### New files
+- `tests/unit/api.test.ts` — 10 API contract compliance tests
+
+### Architecture decisions
+- **Module-scoped callback over event bus**: `setOnUnauthorized()` stores a single function reference — no EventEmitter needed for a single consumer. The handler is set once in `main.tsx` and never changes.
+- **Retry inside `apiRequest()` not at caller level**: All API callers (generate, getCards, deleteCard, etc.) get transparent retry compliance. The existing AbortController timeout acts as the overall deadline across retries — no per-retry timeout needed.
+- **`_resetUnauthorizedState()` test helper**: Exported for test-only use (underscore convention). Avoids exposing internal `isHandlingUnauthorized` flag while enabling clean test isolation.
+
+### Quality gates
+- TypeScript strict: passing (0 errors)
+- ESLint: clean (0 warnings)
+- Vitest: 61/61 tests passing (8 auth + 8 cards + 12 library + 23 export + 10 api)
+- Vite build: succeeds

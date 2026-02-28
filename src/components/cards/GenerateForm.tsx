@@ -139,13 +139,11 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
               description: "Upgrade your plan to generate more cards.",
             });
             return;
-          case "RATE_LIMITED": {
-            const retrySeconds = error.retryAfter ?? 60;
+          case "RATE_LIMITED":
             toast.error("Too many requests", {
-              description: `Please wait ${retrySeconds}s before trying again.`,
+              description: "Please try again in a moment.",
             });
             return;
-          }
           case "VALIDATION_ERROR":
             // Inline errors handled by react-hook-form
             return;

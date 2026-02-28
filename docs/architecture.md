@@ -110,9 +110,11 @@ src/
 ### API Client
 - Auto-injects `product_source: "web_app"` in all request bodies
 - Typed `ApiError` with `status`, `code`, `requestId`, `retryAfter`
-- AbortController timeout (default 60s)
+- AbortController timeout (default 60s) — serves as overall deadline across retries
 - Gets auth token directly from Supabase session (no intermediate storage)
 - Supports GET requests with `params` option (URLSearchParams)
+- **401 handling**: `notifyUnauthorized()` calls registered handler (set in `main.tsx`) which toasts "Session expired" + `signOut()`. Debounced with 1s cooldown to prevent duplicate toasts from concurrent requests.
+- **429 retry**: Auto-retries rate-limited responses up to 2 times. Respects `retry_after` from response (capped at 60s, defaults to 1s). Abort-aware wait integrates with overall timeout.
 
 ### Card Generation Flow
 1. User fills `GenerateForm` → submits to `useCardStore.generateCards()`

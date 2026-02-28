@@ -42,6 +42,40 @@ interface ApiRequestOptions extends Omit<RequestInit, "body"> {
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+// ---------------------------------------------------------------------------
+// 401 handler registration
+// ---------------------------------------------------------------------------
+
+type UnauthorizedHandler = () => void;
+let onUnauthorized: UnauthorizedHandler | null = null;
+let isHandlingUnauthorized = false;
+
+export function setOnUnauthorized(handler: UnauthorizedHandler): void {
+  onUnauthorized = handler;
+}
+
+/** @internal Reset debounce state — test-only */
+export function _resetUnauthorizedState(): void {
+  isHandlingUnauthorized = false;
+  onUnauthorized = null;
+}
+
+function notifyUnauthorized(): void {
+  if (isHandlingUnauthorized || !onUnauthorized) return;
+  isHandlingUnauthorized = true;
+  onUnauthorized();
+  setTimeout(() => {
+    isHandlingUnauthorized = false;
+  }, 1000);
+}
+
+// ---------------------------------------------------------------------------
+// 429 retry constants
+// ---------------------------------------------------------------------------
+
+const MAX_RETRIES = 2;
+const MAX_RETRY_AFTER_SECONDS = 60;
+
 export async function apiRequest<T>(
   path: string,
   options: ApiRequestOptions = {},
@@ -70,29 +104,79 @@ export async function apiRequest<T>(
     if (qs) url += `?${qs}`;
   }
 
+  const fetchConfig: RequestInit = {
+    ...fetchOptions,
+    headers: {
+      "Content-Type": "application/json",
+      ...(session?.access_token && {
+        Authorization: `Bearer ${session.access_token}`,
+      }),
+      ...fetchOptions.headers,
+    },
+    body: requestBody ? JSON.stringify(requestBody) : undefined,
+    signal: controller.signal,
+  };
+
+  let rateLimitRetries = 0;
+
   try {
-    const response = await fetch(url, {
-      ...fetchOptions,
-      headers: {
-        "Content-Type": "application/json",
-        ...(session?.access_token && {
-          Authorization: `Bearer ${session.access_token}`,
-        }),
-        ...fetchOptions.headers,
-      },
-      body: requestBody ? JSON.stringify(requestBody) : undefined,
-      signal: controller.signal,
-    });
+    while (true) {
+      const response = await fetch(url, fetchConfig);
 
-    const json = (await response.json()) as Record<string, unknown> & {
-      request_id?: string;
-      error?: string;
-      code?: ErrorCode;
-      retry_after?: number;
-      details?: Record<string, unknown>;
-    };
+      const json = (await response.json()) as Record<string, unknown> & {
+        request_id?: string;
+        error?: string;
+        code?: ErrorCode;
+        retry_after?: number;
+        details?: Record<string, unknown>;
+      };
 
-    if (!response.ok) {
+      if (response.ok) {
+        return json as T;
+      }
+
+      // 401 — notify handler, then throw
+      if (response.status === 401) {
+        notifyUnauthorized();
+        throw new ApiError(
+          json.error ?? "Unauthorized",
+          401,
+          json.code ?? "UNAUTHORIZED",
+          json.request_id,
+          undefined,
+          json.details,
+        );
+      }
+
+      // 429 — retry up to MAX_RETRIES times
+      if (response.status === 429 && rateLimitRetries < MAX_RETRIES) {
+        const retryAfterSeconds = Math.min(
+          json.retry_after ?? 1,
+          MAX_RETRY_AFTER_SECONDS,
+        );
+        rateLimitRetries++;
+
+        // Abort-aware wait: respects the overall timeout via AbortController
+        await new Promise<void>((resolve, reject) => {
+          if (controller.signal.aborted) {
+            reject(new DOMException("Request timed out", "AbortError"));
+            return;
+          }
+          const waitId = setTimeout(resolve, retryAfterSeconds * 1000);
+          controller.signal.addEventListener(
+            "abort",
+            () => {
+              clearTimeout(waitId);
+              reject(new DOMException("Request timed out", "AbortError"));
+            },
+            { once: true },
+          );
+        });
+
+        continue;
+      }
+
+      // All other errors (including exhausted 429 retries)
       throw new ApiError(
         json.error ?? `Request failed with status ${response.status}`,
         response.status,
@@ -102,8 +186,6 @@ export async function apiRequest<T>(
         json.details,
       );
     }
-
-    return json as T;
   } catch (error) {
     if (error instanceof ApiError) throw error;
 
