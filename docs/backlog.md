@@ -40,6 +40,11 @@ Items specific to the web app. For cross-product features requiring API changes,
 - [ ] CardEditor notes field — the editor currently exposes front, back, and tags only. Notes are displayed (italicized) but not editable. Add notes textarea to `CardEditor.tsx` for full inline card editing.
 - [ ] Additional LANG domain hooks — only `ja` and `default` hooks are registered in the backend hook registry. Add hooks for Chinese (`zh`), Korean (`ko`), Hindi (`hi`), Arabic (`ar`) with language-specific prompt tuning. Requires backend changes; update the language selector in `GenerateForm.tsx` once hooks are registered.
 
+## Code Quality (from audit, low priority)
+- [ ] **M10 — Extract Library.tsx concerns** — 439 lines with ~6 logical sections. Candidates: `useUndoDelete()` custom hook (~77 lines), `LibraryEmptyState` component (~46 lines), `LibraryPagination` component (~31 lines). Would bring Library.tsx to ~285 lines. No user-facing impact.
+- [ ] **M11 — Cancel stale debounce on external filter clear** — `LibraryToolbar.tsx` search debounce can fire a stale `onFilterChange` if "Clear filters" is clicked within the 300ms debounce window. Fix: clear `debounceRef` in the `useEffect` that syncs `filters.search`. Imperceptible visual glitch (single frame).
+- [ ] **M12 — Memo `FormatCard` in Export page** — 4 format cards re-render on every `formatOptions` state change despite stable props. Wrap in `React.memo()`. Negligible perf impact at 4 items.
+
 ## Design Decisions Pending
 - [ ] Difficulty dropdown — keep or remove based on Anki add-on audit results (see PRD Open Design Questions)
 - [ ] Granularity controls — should the web app expose granularity preferences per domain?
