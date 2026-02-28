@@ -17,6 +17,12 @@ import {
   generateId,
 } from "./schema";
 
+/**
+ * Maximum cards per APKG export.
+ * 2000 cards = ~4000 SQL inserts — completes in <2s on low-end devices.
+ */
+const MAX_APKG_CARDS = 2000;
+
 export interface ApkgCard {
   front: string;
   back: string;
@@ -26,6 +32,10 @@ export interface ApkgCard {
 export interface ApkgOptions {
   deckName: string;
   cards: ApkgCard[];
+  /** Called with progress fraction (0–1) during card insertion. */
+  onProgress?: (fraction: number) => void;
+  /** Signal to abort the export. Checked between batches. */
+  signal?: AbortSignal;
 }
 
 export interface ApkgResult {
@@ -42,11 +52,25 @@ export async function generateApkg(options: ApkgOptions): Promise<ApkgResult> {
     throw new Error("At least one card is required");
   }
 
+  if (cards.length > MAX_APKG_CARDS) {
+    throw new Error(
+      `Export is limited to ${MAX_APKG_CARDS} cards per file. You selected ${cards.length}. Please reduce your selection.`,
+    );
+  }
+
   // Initialize sql.js with browser WASM loading.
-  // locateFile tells sql.js where to find the .wasm binary.
-  const SQL = await initSqlJs({
-    locateFile: (file: string) => `/${file}`,
-  });
+  // Uses Vite's BASE_URL so it works under subpath deploys (defaults to "/").
+  let SQL: Awaited<ReturnType<typeof initSqlJs>>;
+  try {
+    SQL = await initSqlJs({
+      locateFile: (file: string) => `${import.meta.env.BASE_URL}${file}`,
+    });
+  } catch (err) {
+    throw new Error(
+      "Failed to load the APKG export engine. Please reload the page and try again.",
+      { cause: err },
+    );
+  }
 
   const db = new SQL.Database();
 
@@ -78,11 +102,12 @@ export async function generateApkg(options: ApkgOptions): Promise<ApkgResult> {
       ],
     );
 
-    // Insert notes and cards
+    // Insert notes and cards in batches, yielding to the UI thread between batches.
     const now = Math.floor(Date.now() / 1000);
-    let duePosition = 0;
+    const BATCH_SIZE = 100;
 
-    for (const card of cards) {
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i]!;
       const noteId = generateId();
       const cardId = generateId();
       const guid = generateGuid();
@@ -110,29 +135,38 @@ export async function generateApkg(options: ApkgOptions): Promise<ApkgResult> {
       db.run(
         `INSERT INTO cards VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          cardId,      // id
-          noteId,      // nid
-          deckId,      // did
-          0,           // ord (card template ordinal)
-          now,         // mod
-          -1,          // usn
-          0,           // type (0=new)
-          0,           // queue (0=new)
-          duePosition, // due (position in new card queue)
-          0,           // ivl
-          0,           // factor
-          0,           // reps
-          0,           // lapses
-          0,           // left
-          0,           // odue
-          0,           // odid
-          0,           // flags
-          "",          // data
+          cardId,  // id
+          noteId,  // nid
+          deckId,  // did
+          0,       // ord (card template ordinal)
+          now,     // mod
+          -1,      // usn
+          0,       // type (0=new)
+          0,       // queue (0=new)
+          i,       // due (position in new card queue)
+          0,       // ivl
+          0,       // factor
+          0,       // reps
+          0,       // lapses
+          0,       // left
+          0,       // odue
+          0,       // odid
+          0,       // flags
+          "",      // data
         ],
       );
 
-      duePosition++;
+      // Yield every BATCH_SIZE cards to prevent UI freeze
+      if ((i + 1) % BATCH_SIZE === 0 && i + 1 < cards.length) {
+        options.onProgress?.((i + 1) / cards.length);
+        if (options.signal?.aborted) {
+          throw new Error("Export was cancelled");
+        }
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      }
     }
+
+    options.onProgress?.(1);
 
     // Export database to binary
     const dbBinary = db.export();

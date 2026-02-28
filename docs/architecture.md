@@ -156,6 +156,8 @@ src/
 - **Dynamic options**: Options panel renders from the registry's `options` array — `text` → Input, `boolean` → Checkbox, `select` → Select. Adding a format requires zero UI code changes.
 - **Preview**: Collapsible preview generates output for first 3 cards in chosen format via `dispatchExport()`.
 - **APKG code splitting**: `dispatchExport("apkg", ...)` uses `await import("./apkg")` → Vite auto-splits sql.js + JSZip into a separate ~143 KB chunk loaded only on demand.
+- **APKG robustness**: Card limit (2000 max), batched SQL inserts (100/batch with `setTimeout(0)` yields), progress callback + AbortSignal piped through adapter → dispatcher → Export page. Monotonic ID generator prevents collisions across module reloads. WASM path uses `import.meta.env.BASE_URL` for subpath deploy support.
+- **APKG progress/cancel UI**: Export button shows live progress % for APKG exports with >100 cards, doubles as cancel button during export. AbortController signal propagates through the pipeline to interrupt batched inserts.
 - **Recent deck names**: Dropdown populated from `useSettingsStore.recentDeckNames` (max 5, MRU order). Saved on successful export.
 - **Download**: `triggerDownload()` creates object URL → hidden `<a>` click → revoke. Works for both string (CSV/Markdown/JSON) and ArrayBuffer (APKG).
 

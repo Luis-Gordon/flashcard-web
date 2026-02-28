@@ -357,3 +357,35 @@
 - ESLint: clean (0 warnings)
 - Vitest: 61/61 tests passing (no test changes — CSS/ARIA only)
 - Vite build: succeeds
+
+## Session 12 — 2026-02-28 — Audit Batch 4: Export Robustness (C3, H3, H5)
+
+### What was done
+
+**H3 — Monotonic ID generator:**
+- Replaced `idCounter`-based generator in `schema.ts` with monotonic `lastId` pattern. Uses current timestamp when clock has advanced, otherwise increments by 1. Safe across module reloads (Date.now() ~1.7 trillion always exceeds reset `lastId` of 0).
+- Added test verifying 100 consecutive calls produce strictly increasing values.
+
+**H5 — WASM path fix:**
+- Replaced hardcoded `"/"` in `builder.ts` with `import.meta.env.BASE_URL` (Vite built-in, defaults to `"/"`, always has trailing slash). Supports subpath deploys.
+- Added try/catch around `initSqlJs()` with user-friendly error message for WASM load failures.
+
+**C3 — APKG builder batched inserts + progress/cancel:**
+- Added `MAX_APKG_CARDS = 2000` constant with clear error message when exceeded.
+- Extended `ApkgOptions` with `onProgress` callback and `signal` (AbortSignal).
+- Replaced tight `for..of` loop with indexed loop that yields every 100 cards via `setTimeout(0)`, reports progress, and checks abort signal between batches.
+- Extended `ApkgExportOptions` in `apkg.ts` adapter to forward `onProgress`/`signal`.
+- Added optional `callbacks` parameter to `dispatchExport()` in `index.ts`, forwarded to APKG case only (other formats are synchronous and fast).
+- Added `exportProgress` state and `exportAbortRef` (AbortController) to `Export.tsx`. Export button shows live progress % for APKG with >100 cards, doubles as cancel button during export. Cancel hint text shown below button for large exports.
+
+### Architecture decisions
+- **Cooperative multitasking via `setTimeout(0)`**: Yields to browser's macrotask queue every 100 cards (~200 SQL inserts), letting the browser paint frames and process user input (like clicking cancel). Overhead is negligible — 20 yields for 2000 cards.
+- **AbortController at page level**: Created per-export in `handleExport`, ref stored for button access. Signal checked after yield points — catches aborts that arrive during the setTimeout. Cancelled exports silently return (no error toast).
+- **Progress callback as `setState`**: `setExportProgress` passed directly as `onProgress` — React setState accepts values directly, no wrapper needed. Progress % only shown for APKG with >100 cards since small exports finish instantly.
+- **Card limit at builder level**: 2000 cards = ~4000 SQL inserts, completes in <2s on low-end devices. Enforced in `generateApkg()` before WASM init to fail fast.
+
+### Quality gates
+- TypeScript strict: passing (0 errors)
+- ESLint: clean (0 warnings)
+- Vitest: 62/62 tests passing (61 existing + 1 new monotonic ID test)
+- Vite build: succeeds

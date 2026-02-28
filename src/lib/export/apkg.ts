@@ -3,6 +3,8 @@ import type { ExportResult } from "./types";
 
 export interface ApkgExportOptions {
   deckName: string;
+  onProgress?: (fraction: number) => void;
+  signal?: AbortSignal;
 }
 
 /**
@@ -24,6 +26,8 @@ export async function exportApkg(
   const result = await generateApkg({
     deckName: options.deckName,
     cards: apkgCards,
+    onProgress: options.onProgress,
+    signal: options.signal,
   });
 
   // Sanitize deck name for filename

@@ -67,11 +67,16 @@ export async function dispatchExport(
   format: ExportFormat,
   cards: (Card | LibraryCard)[],
   options: Record<string, unknown>,
+  callbacks?: { onProgress?: (fraction: number) => void; signal?: AbortSignal },
 ): Promise<ExportResult> {
   switch (format) {
     case "apkg": {
       const { exportApkg } = await import("./apkg");
-      return exportApkg(cards, options as { deckName: string });
+      return exportApkg(cards, {
+        deckName: (options as { deckName: string }).deckName,
+        onProgress: callbacks?.onProgress,
+        signal: callbacks?.signal,
+      });
     }
     case "csv":
       return exportCsv(cards, options as { separator?: "comma" | "tab"; includeTags?: boolean; includeNotes?: boolean });

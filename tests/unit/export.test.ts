@@ -264,4 +264,12 @@ describe("APKG schema helpers", () => {
     const ids = new Set(Array.from({ length: 100 }, () => generateId()));
     expect(ids.size).toBe(100);
   });
+
+  test("generateId produces strictly increasing values", async () => {
+    const { generateId } = await importSchema();
+    const ids = Array.from({ length: 100 }, () => generateId());
+    for (let i = 1; i < ids.length; i++) {
+      expect(ids[i]).toBeGreaterThan(ids[i - 1]!);
+    }
+  });
 });

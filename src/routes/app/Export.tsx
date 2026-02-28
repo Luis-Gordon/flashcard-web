@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link } from "react-router";
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
 import { useExportCards } from "@/lib/hooks/useCards";
@@ -65,6 +65,8 @@ export default function Export() {
     buildDefaults(EXPORT_FORMATS[0]!.options),
   );
   const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const exportAbortRef = useRef<AbortController | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewContent, setPreviewContent] = useState<string>("");
 
@@ -107,9 +109,17 @@ export default function Export() {
   const handleExport = useCallback(async () => {
     if (exportCards.length === 0) return;
 
+    const abortController = new AbortController();
+    exportAbortRef.current = abortController;
     setIsExporting(true);
+    setExportProgress(0);
     try {
-      const result = await dispatchExport(selectedFormat, exportCards, formatOptions);
+      const result = await dispatchExport(
+        selectedFormat,
+        exportCards,
+        formatOptions,
+        { onProgress: setExportProgress, signal: abortController.signal },
+      );
       triggerDownload(result);
 
       // Save deck name for recent list
@@ -120,10 +130,13 @@ export default function Export() {
 
       toast.success(`Exported ${exportCards.length} card${exportCards.length !== 1 ? "s" : ""} as ${currentConfig.extension}`);
     } catch (err) {
+      if (abortController.signal.aborted) return;
       const message = err instanceof Error ? err.message : "Export failed";
       toast.error(message);
     } finally {
       setIsExporting(false);
+      setExportProgress(0);
+      exportAbortRef.current = null;
     }
   }, [exportCards, selectedFormat, formatOptions, currentConfig, addRecentDeckName]);
 
@@ -264,15 +277,17 @@ export default function Export() {
 
       {/* Export button */}
       <Button
-        onClick={handleExport}
-        disabled={isExporting}
+        onClick={isExporting ? () => exportAbortRef.current?.abort() : handleExport}
+        variant={isExporting ? "outline" : "default"}
         className="w-full gap-2"
         size="lg"
       >
         {isExporting ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Exporting...
+            {selectedFormat === "apkg" && exportCards.length > 100
+              ? `Exporting... ${Math.round(exportProgress * 100)}%`
+              : "Exporting..."}
           </>
         ) : (
           <>
@@ -281,6 +296,11 @@ export default function Export() {
           </>
         )}
       </Button>
+      {isExporting && selectedFormat === "apkg" && exportCards.length > 100 && (
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          Click the button above to cancel
+        </p>
+      )}
     </div>
   );
 }

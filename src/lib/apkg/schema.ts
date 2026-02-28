@@ -104,12 +104,17 @@ export function fieldChecksum(text: string): number {
   return Math.abs(hash);
 }
 
-/** Unique ID generator based on timestamp + random offset. */
-let idCounter = 0;
+/**
+ * Monotonic ID generator.
+ * Guarantees strictly increasing IDs: uses current timestamp when the clock
+ * has advanced, otherwise increments the last ID by 1. Safe across module
+ * reloads (Date.now() ~1.7 trillion always exceeds a reset lastId of 0).
+ */
+let lastId = 0;
 export function generateId(): number {
   const now = Date.now();
-  idCounter++;
-  return now + idCounter;
+  lastId = now > lastId ? now : lastId + 1;
+  return lastId;
 }
 
 export interface ColRowOptions {
