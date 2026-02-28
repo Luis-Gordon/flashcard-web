@@ -6,7 +6,6 @@ export function SanitizedHTML({ html, className }: { html: string; className?: s
       "div", "span", "p", "br", "strong", "em", "b", "i", "u",
       "ul", "ol", "li", "h1", "h2", "h3", "h4", "h5", "h6",
       "ruby", "rt", "rp", "sub", "sup", "code", "pre", "mark",
-      "table", "thead", "tbody", "tr", "th", "td",
     ],
     ALLOWED_ATTR: ["class", "lang"],
   });

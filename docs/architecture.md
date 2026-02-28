@@ -125,9 +125,16 @@ src/
 6. User can edit (inline `CardEditor`), delete, select/deselect cards
 7. "Generate more" returns to form; "Discard all" clears store
 
+### Security Headers
+- `public/_headers` file is copied to `dist/` by Vite and parsed by Cloudflare Workers edge
+- CSP: `default-src 'self'`, hashed inline script for prerender redirect, `'wasm-unsafe-eval'` for sql.js, `'unsafe-inline'` for Radix UI runtime styles
+- Additional headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (deny camera/mic/geo/payment)
+- CSP `connect-src` allowlists Supabase + backend staging. Production URL to be added at launch.
+
 ### HTML Sanitization
 - Backend generates card content as structured HTML with `fc-*` CSS classes
 - Shared `SanitizedHTML` component (`src/components/cards/SanitizedHTML.tsx`): DOMPurify with allowlisted tags + `class`/`lang` attrs
+- Allowlist is strict to the `fc-*` contract — no table tags (backend never generates them)
 - Used by both `CardReview` (generation) and `LibraryCardItem` (library)
 - Prevents XSS while preserving backend's semantic HTML structure
 
@@ -177,6 +184,8 @@ src/
 - `scripts/prerender.ts` generates static HTML for 4 marketing pages
 - Runs at build time via `prebuild` npm hook
 - React components are the source of truth; static HTML includes OG meta, JSON-LD
+- All interpolated values are HTML-escaped; JSON-LD uses `JSON.stringify` (not template literals)
+- Inline redirect script is CSP-hashed — if changed, recompute hash in `public/_headers`
 - Output: `public/{page}.html` (gitignored build artifacts)
 
 ## Not Yet Implemented

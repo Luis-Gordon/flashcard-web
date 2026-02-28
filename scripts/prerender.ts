@@ -65,6 +65,16 @@ const PAGES: PageConfig[] = [
   },
 ];
 
+/** Escape special characters for safe use in HTML attributes. */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 function buildHtml(page: PageConfig): string {
   // Render the React component inside a StaticRouter for link resolution
   const html = renderToString(
@@ -80,13 +90,13 @@ function buildHtml(page: PageConfig): string {
 
   const jsonLd = isLanding
     ? `<script type="application/ld+json">
-{
+${JSON.stringify({
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "Memogenesis",
-  "url": "${BASE_URL}",
-  "description": "${page.description}"
-}
+  name: "Memogenesis",
+  url: BASE_URL,
+  description: page.description,
+})}
 </script>`
     : "";
 
@@ -95,24 +105,24 @@ function buildHtml(page: PageConfig): string {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${page.title}</title>
-    <meta name="description" content="${page.description}" />
+    <title>${escapeHtml(page.title)}</title>
+    <meta name="description" content="${escapeHtml(page.description)}" />
     <link rel="canonical" href="${canonical}" />
 
     <link rel="icon" type="image/svg+xml" href="/logo-lineart-icon.svg" />
     <link rel="icon" type="image/png" href="/favicon.png" />
 
     <!-- Open Graph -->
-    <meta property="og:title" content="${page.title}" />
-    <meta property="og:description" content="${page.description}" />
+    <meta property="og:title" content="${escapeHtml(page.title)}" />
+    <meta property="og:description" content="${escapeHtml(page.description)}" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="${canonical}" />
     <meta property="og:image" content="${BASE_URL}/og-image.png" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${page.title}" />
-    <meta name="twitter:description" content="${page.description}" />
+    <meta name="twitter:title" content="${escapeHtml(page.title)}" />
+    <meta name="twitter:description" content="${escapeHtml(page.description)}" />
     <meta name="twitter:image" content="${BASE_URL}/og-image.png" />
 
     ${jsonLd}
@@ -122,6 +132,7 @@ function buildHtml(page: PageConfig): string {
     <noscript>
       <p>Memogenesis requires JavaScript for the full experience. The content above is a static preview.</p>
     </noscript>
+    <!-- CSP: if this script changes, recompute the sha256 hash in public/_headers -->
     <script>
       // Redirect .html URLs to clean paths (SPA handles them via wrangler)
       if (window.location.pathname.endsWith('.html')) {

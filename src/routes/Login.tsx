@@ -39,7 +39,6 @@ export default function Login() {
       .signIn(values.email, values.password);
 
     if (authError) {
-      console.error("Sign in error:", authError);
       setError("Invalid email or password. Please try again.");
       return;
     }

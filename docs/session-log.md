@@ -389,3 +389,33 @@
 - ESLint: clean (0 warnings)
 - Vitest: 62/62 tests passing (61 existing + 1 new monotonic ID test)
 - Vite build: succeeds
+
+## Session 13 — 2026-02-28 — Audit Batch 5: Security (C5, H8, M2, M4)
+
+### What was done
+
+**C5 — CSP and security headers:**
+- Created `public/_headers` with Content-Security-Policy, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, and Permissions-Policy.
+- CSP allows `'self'`, hashed inline prerender script, `'wasm-unsafe-eval'` (sql.js), `'unsafe-inline'` for styles (Radix UI runtime), and Supabase + backend staging in `connect-src`.
+
+**H8 — Prerender template injection:**
+- Added `escapeHtml()` utility for all 8 HTML attribute interpolations in `scripts/prerender.ts`.
+- Replaced manual JSON-LD template with `JSON.stringify` for safe serialization.
+- Added CSP hash maintenance comment above inline redirect script.
+
+**M2 — Auth error console leakage:**
+- Removed `console.error` from `Login.tsx` and `Signup.tsx`. User-facing messages are already generic; Supabase auth error objects contain internal details that shouldn't appear in DevTools.
+
+**M4 — DOMPurify table tag over-allowlisting:**
+- Removed 6 table-related tags (`table`, `thead`, `tbody`, `tr`, `th`, `td`) from `SanitizedHTML.tsx` allowlist. No backend prompt generates table elements — allowlist now matches the `fc-*` contract exactly.
+
+### Architecture decisions
+- **`_headers` file over Worker middleware**: For static asset serving, Cloudflare parses `_headers` at the edge without requiring a Worker script. Vite copies `public/_headers` → `dist/_headers` at build time.
+- **CSP hash for inline script**: The prerender redirect script is the only inline `<script>`. Hashing it avoids `'unsafe-inline'` for scripts while keeping the redirect functional. A comment in the source reminds to recompute the hash if the script changes.
+- **`JSON.stringify` for JSON-LD**: Eliminates quote-escaping bugs that manual template interpolation can introduce. The output is valid JSON by construction.
+
+### Quality gates
+- TypeScript strict: passing (0 errors)
+- ESLint: clean (0 warnings)
+- Vitest: 62/62 tests passing (no test changes)
+- Vite build: succeeds, `dist/_headers` present
