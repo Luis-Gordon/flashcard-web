@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router";
+import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
 import { useExportCards } from "@/lib/hooks/useCards";
 import { useSettingsStore } from "@/stores/settings";
 import { EXPORT_FORMATS, dispatchExport } from "@/lib/export";
@@ -180,19 +181,23 @@ export default function Export() {
       </div>
 
       {/* Format selector — 2×2 grid */}
-      <fieldset className="mb-6">
-        <legend className="mb-3 text-sm font-medium">Format</legend>
-        <div className="grid grid-cols-2 gap-3">
+      <div className="mb-6">
+        <p id="format-label" className="mb-3 text-sm font-medium">Format</p>
+        <RadioGroupPrimitive.Root
+          value={selectedFormat}
+          onValueChange={(val) => setSelectedFormat(val as ExportFormat)}
+          className="grid grid-cols-2 gap-3"
+          aria-labelledby="format-label"
+        >
           {EXPORT_FORMATS.map((fmt) => (
             <FormatCard
               key={fmt.id}
               config={fmt}
               isSelected={selectedFormat === fmt.id}
-              onSelect={() => setSelectedFormat(fmt.id)}
             />
           ))}
-        </div>
-      </fieldset>
+        </RadioGroupPrimitive.Root>
+      </div>
 
       {/* Options panel */}
       {currentConfig.options.length > 0 && (
@@ -285,20 +290,18 @@ export default function Export() {
 function FormatCard({
   config,
   isSelected,
-  onSelect,
 }: {
   config: ExportFormatConfig;
   isSelected: boolean;
-  onSelect: () => void;
 }) {
   const Icon = ICON_MAP[config.icon] ?? Package;
 
   return (
-    <button
-      type="button"
-      onClick={onSelect}
+    <RadioGroupPrimitive.Item
+      value={config.id}
       className={cn(
-        "flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-all",
+        "flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-all outline-none",
+        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
         isSelected
           ? "border-primary bg-primary/5 ring-1 ring-primary"
           : "border-border hover:border-muted-foreground/30 hover:bg-accent/50",
@@ -323,7 +326,7 @@ function FormatCard({
       <p className="text-xs leading-relaxed text-muted-foreground">
         {config.description}
       </p>
-    </button>
+    </RadioGroupPrimitive.Item>
   );
 }
 

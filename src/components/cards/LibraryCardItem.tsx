@@ -74,7 +74,7 @@ export const LibraryCardItem = memo(function LibraryCardItem({
           <span className="ml-auto text-[11px] text-muted-foreground tabular-nums">
             {timeAgo}
           </span>
-          <div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
             <Button
               variant="ghost"
               size="icon"
@@ -109,7 +109,7 @@ export const LibraryCardItem = memo(function LibraryCardItem({
         {/* Expand toggle + back content */}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="mt-2 flex w-full items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+          className="mt-2 flex w-full items-center gap-1 rounded py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]"
         >
           {expanded ? (
             <>

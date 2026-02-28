@@ -322,3 +322,38 @@
 - ESLint: clean (0 warnings)
 - Vitest: 61/61 tests passing (8 auth + 8 cards + 12 library + 23 export + 10 api)
 - Vite build: succeeds
+
+## Session 11 — 2026-02-28 — Audit Batch 3: Accessibility (C4, H6, H7, M6, M13)
+
+### What was done
+
+**C4 — Card actions invisible to keyboard users:**
+- Added `focus-within:opacity-100` to the action buttons container in `LibraryCardItem.tsx`. When a keyboard user tabs to Edit/Delete buttons, the container becomes visible (same as mouse hover).
+
+**M13 — Expand button missing focus indicator:**
+- Added `outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]` plus `rounded py-0.5` to the "Show answer" / "Hide answer" button. Uses `focus-visible` (not `focus`) to avoid ring flash on mouse clicks.
+
+**M6 — No skip-to-content link:**
+- Added `id="main-content"` to the `<main>` element in `AppLayout.tsx`.
+- Inserted skip-to-content `<a>` as first child of the layout container using `sr-only` → `focus:not-sr-only` pattern. Appears as a prominent pill at top-left when Tab is pressed; Enter jumps focus to main content.
+
+**H6 — Domain badge dark mode contrast failing WCAG AA:**
+- Updated all 10 domain color entries in `domains.ts`: `text-*-300` → `text-*-200` (lighter text), `bg-*-900/40` → `bg-*-950/60` (darker, more opaque background). Achieves ~5.5–7:1 contrast ratio (WCAG AA requires 4.5:1). Light mode classes unchanged.
+
+**H7 — Export format selector missing radio semantics:**
+- Replaced `<fieldset>` + `<button>` elements with Radix `RadioGroup.Root` + `RadioGroup.Item` primitives in `Export.tsx`.
+- No `RadioGroupPrimitive.Indicator` child — cards themselves are the radio items (no visible dot).
+- Screen readers now announce "Anki Package, radio, 1 of 4, checked". Arrow keys cycle between options via Radix roving-tabindex.
+- Added `focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]` for keyboard focus indication.
+- Simplified `FormatCard` props: removed `onSelect` callback (Radix Root handles selection via `onValueChange`).
+
+### Architecture decisions
+- **Radix primitive over shadcn wrapper**: The shadcn `RadioGroup` component renders a visible circle indicator. For card-style radio items, we use the Radix primitive directly to get ARIA semantics without the unwanted dot.
+- **`focus-within` vs `focus-visible`**: `focus-within` on the container (C4) triggers when any descendant has focus — appropriate for revealing a group of buttons. `focus-visible` on individual buttons (M13, H7) only activates for keyboard navigation, avoiding ring flash on mouse clicks.
+- **Dark mode contrast strategy**: Shifted to `*-200` text (lighter) and `*-950/60` background (darker + more opaque) to maximize contrast. The `/60` opacity provides enough background distinction without being too heavy.
+
+### Quality gates
+- TypeScript strict: passing (0 errors)
+- ESLint: clean (0 warnings)
+- Vitest: 61/61 tests passing (no test changes — CSS/ARIA only)
+- Vite build: succeeds
