@@ -14,7 +14,7 @@ Items specific to the web app. For cross-product features requiring API changes,
 
 ### Phase 2: Card Generation
 - [ ] Rejection visibility — show filtered card count and reasons in review panel
-- [ ] User guidance field — "Focus on..." text input in generation form (requires backend API change)
+- [ ] User guidance field — "Focus on..." text input in generation form (backend API ready: `user_guidance` field on POST /cards/generate)
 - [ ] Card count expectations — "Generated 8 of 10 (2 filtered by quality checks)" messaging
 - [ ] Extension handoff — parse ?content=...&source_url=...&source_title=...&domain=... URL params
 
