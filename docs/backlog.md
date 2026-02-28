@@ -2,9 +2,6 @@
 
 Items specific to the web app. For cross-product features requiring API changes, see the Product Backlog section in the root PRD.md.
 
-## Critical Bugs
-- [ ] **[CRITICAL — fix before production]** `DELETE /cards/:id` — 404 detection broken in `flashcard-backend/src/routes/library.ts`. Supabase `.update()` returns `count: null` unless `{ count: 'exact' }` is passed as a second argument. The `if (count === 0)` check never fires, so deleting a non-existent card ID returns `{ deleted: true }` instead of 404. Fix: change `.update({ is_deleted: true })` to `.update({ is_deleted: true }, { count: 'exact' })`.
-
 ## Pre-Phase 3: Deferred (Trigger: lang:zh ships)
 
 - [ ] **LANGUAGE_OPTIONS decoupling** — `GenerateForm.tsx` hardcodes `LANGUAGE_OPTIONS = [{value: "ja"}, {value: "default"}]`. This must be fixed in the same commit that ships the `lang:zh` backend sub-hook — not before, not after. Fix: maintain a `LANG_HOOK_OPTIONS` constant in `src/lib/constants/hooks.ts` that mirrors the backend hook registry. When a new lang sub-hook ships, `hooks.ts` is updated in the same commit. The `displayName` from the hook definition becomes the option label. Note: this is a data coupling fix, not an i18n concern — option labels are product decisions, not translation keys.
