@@ -26,11 +26,11 @@ Browser → Cloudflare Workers (static) → SPA
 | Forms | react-hook-form + @hookform/resolvers | 7.x / 5.x |
 | HTML Sanitization | DOMPurify | 3.x |
 | Dates | date-fns | 4.x |
-| Export (Phase 3C) | sql.js (WASM) + JSZip | 1.x / 3.x |
+| Export (Phase 4a) | sql.js (WASM) + JSZip | 1.x / 3.x |
 | Testing | Vitest + @testing-library/react | 4.x / 16.x |
 | Hosting | Cloudflare Workers | — |
 
-## Directory Structure (Phase 3)
+## Directory Structure
 
 ```
 src/
@@ -52,7 +52,7 @@ src/
 │       ├── Generate.tsx        # Form ↔ review toggle + export selected
 │       ├── Library.tsx         # Paginated grid/list, filters, undo delete, export selected
 │       ├── Export.tsx          # Format selector, options, preview, download
-│       ├── Billing.tsx         # Placeholder (Phase 4)
+│       ├── Billing.tsx         # Placeholder (Phase 4b)
 │       └── Settings.tsx        # Placeholder (Phase 5)
 ├── components/
 │   ├── AuthGuard.tsx           # Route guard: redirect if unauthenticated
@@ -98,6 +98,15 @@ src/
     ├── auth.ts                 # Zustand: session, user, signIn/signUp/signOut
     ├── cards.ts                # Zustand: pending/library cards, generation, selection, export transfer
     └── settings.ts             # Zustand (persist): view mode, recent deck names
+scripts/
+├── generate-assets.ts          # Favicon + OG image generation
+└── prerender.ts                # Static HTML pre-renderer for marketing pages
+docs/
+├── architecture.md             # This file — living system state
+├── backlog.md                  # Per-project task tracking
+├── session-log.md              # Append-only session notes
+├── audits/                     # Code audit reports
+└── plans/                      # Implementation planning docs
 ```
 
 ## Key Patterns
@@ -204,5 +213,5 @@ src/
 - CSP `connect-src` allows both staging and production backend URLs
 
 ## Not Yet Implemented
-- Stripe Checkout + billing portal (Phase 4)
+- Stripe Checkout + billing portal (Phase 4b)
 - Account settings + data export (Phase 5)

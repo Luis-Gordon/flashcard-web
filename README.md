@@ -6,7 +6,7 @@ Part of the [Flashcard Tools ecosystem](https://github.com/Luis-Gordon/flashcard
 
 ## Status
 
-**Phase 1 complete** — project initialized with auth, marketing pages, legal pages, and app shell. See [CLAUDE.md](./CLAUDE.md) for next steps.
+**Phases 1–3 + 4a complete** — auth, marketing pages, card generation + review, paginated library with filters, and multi-format export (APKG/CSV/Markdown/JSON). See [CLAUDE.md](./CLAUDE.md) for next steps.
 
 ## Getting Started
 
@@ -49,8 +49,11 @@ Copy `.env.example` to `.env.development` and fill in your Supabase credentials:
 npm run dev          # Vite dev server
 npm run build        # Production build (includes prerender)
 npm run preview      # Preview production build
-npm run deploy       # Deploy to Cloudflare Workers
+npm run deploy       # Deploy to Cloudflare Workers (production)
+npm run build:staging # Build with staging env
+npm run deploy:staging # Build + deploy to staging Workers
 npm run test         # Run unit tests (Vitest)
+npm run test:watch   # Run tests in watch mode
 npm run test:e2e     # Run e2e tests (Playwright)
 npm run lint         # ESLint
 npm run lint:fix     # ESLint with auto-fix
@@ -67,8 +70,8 @@ npm run typecheck    # TypeScript type checking
 | Styling | Tailwind CSS v4 + shadcn/ui | Styling |
 | State | Zustand | Client-side state |
 | Auth | Supabase Auth | Shared with backend |
-| Payments | Stripe Checkout + Customer Portal | Billing (Phase 4) |
-| Export | sql.js (WASM) + JSZip | Client-side .apkg generation (Phase 3) |
+| Payments | Stripe Checkout + Customer Portal | Billing (Phase 4b) |
+| Export | sql.js (WASM) + JSZip | Client-side .apkg export (Phase 4a) |
 | Hosting | Cloudflare Workers (static assets) | Deployment |
 | Testing | Vitest (unit) + Playwright (e2e) | Testing |
 
