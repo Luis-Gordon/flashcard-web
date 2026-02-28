@@ -24,9 +24,9 @@ React SPA for card generation, library management, .apkg export, and billing. Vi
 
 ## Commands
 ```bash
-npm run dev                      # Vite dev server (Workers runtime via CF plugin)
+npm run dev                      # Vite dev server (plain SPA, no Workers runtime)
 npm run build                    # Production build
-npm run preview                  # Preview production build in Workers runtime
+npm run preview                  # Preview production build locally
 npm run deploy                   # wrangler deploy
 npm run test                     # Vitest
 npm run test:e2e                 # Playwright
@@ -46,7 +46,7 @@ npm run typecheck                # tsc --noEmit
 **Rule**: If PRD.md and CLAUDE.md conflict, PRD.md wins. PRD lives at repo root: `../../PRD.md`
 
 ## Tech Stack
-- Build: Vite 6 + @cloudflare/vite-plugin
+- Build: Vite 6 + @vitejs/plugin-react + @tailwindcss/vite
 - UI: React 19, React Router 7 (library mode)
 - Styling: Tailwind CSS v4 + shadcn/ui
 - State: Zustand (client-side working state)
@@ -74,16 +74,15 @@ src/
 │       └── Settings.tsx         # Account settings, data export
 ├── components/
 │   ├── ui/                      # shadcn/ui components
-│   ├── cards/                   # GenerateForm, CardReview, CardList, CardEditor
-│   ├── export/                  # DeckBuilder, ApkgExporter
-│   └── billing/                 # UsageDisplay, PlanCard, UpgradeModal
+│   ├── cards/                   # GenerateForm, CardReview, CardEditor, LibraryCardItem, LibraryToolbar, SanitizedHTML
+│   └── billing/                 # UpgradeModal
 ├── lib/
 │   ├── api.ts                   # Backend API client (fetch + auth header)
 │   ├── supabase.ts              # Supabase browser client
 │   ├── apkg/                    # sql.js + JSZip .apkg generator
 │   │   ├── builder.ts
 │   │   └── schema.ts            # Anki SQLite schema constants
-│   └── hooks/                   # useAuth, useCards, useUsage
+│   └── hooks/                   # useCards, useCardCount, useUsage
 ├── stores/
 │   ├── cards.ts                 # Zustand card store
 │   └── settings.ts              # User preferences
@@ -100,7 +99,6 @@ scripts/
 index.html
 vite.config.ts
 wrangler.jsonc
-tailwind.config.ts
 tsconfig.json
 package.json
 ```
