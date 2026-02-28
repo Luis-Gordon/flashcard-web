@@ -516,3 +516,26 @@
 - ESLint: clean (0 warnings)
 - Vitest: 113/113 tests passing (101 → 113, +12 new keyboard shortcut tests)
 - Vite build: succeeds
+
+## Session 17 — 2026-02-28 — Docs: Align phase numbering across all project docs
+
+### What was done
+- Updated `docs/architecture.md` and `README.md` to match the PRD restructuring that split old Phase 3 (library + export) into Phase 3 (Library) + Phase 4a (Export).
+- Previous session (16.5) had already aligned `CLAUDE.md` and `MEMORY.md`; this session completed the cascade.
+
+**architecture.md (5 changes):**
+- Tech stack table: `Export (Phase 3C)` → `Export (Phase 4a)`
+- Section heading: `## Directory Structure (Phase 3)` → `## Directory Structure` (removed stale phase tag)
+- Directory tree: `Billing.tsx` placeholder `(Phase 4)` → `(Phase 4b)`
+- Directory tree: Added `scripts/` (generate-assets.ts, prerender.ts) and `docs/` (backlog.md, audits/, plans/) entries
+- Not Yet Implemented: `(Phase 4)` → `(Phase 4b)`
+
+**README.md (4 changes):**
+- Status line: `Phase 1 complete` → `Phases 1–3 + 4a complete` with updated feature summary
+- Commands: Added `build:staging`, `deploy:staging`, `test:watch`; clarified `deploy` as `(production)`
+- Tech stack: `Billing (Phase 4)` → `Billing (Phase 4b)`
+- Tech stack: `Client-side .apkg generation (Phase 3)` → `Client-side .apkg export (Phase 4a)`
+
+### Quality gates
+- No code changes — documentation only
+- Verified with grep: no stale phase references remain in either file
