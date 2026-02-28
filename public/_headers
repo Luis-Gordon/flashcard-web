@@ -3,4 +3,4 @@
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-gwcB21tbIpiEWTM5Peh/DqNWtP4iCaVY+3mzD2HGTZQ=' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://netjvshhpnesuyrkhmcw.supabase.co https://flashcard-backend-staging.luiswgordon.workers.dev; img-src 'self' data: blob:; font-src 'self'; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-gwcB21tbIpiEWTM5Peh/DqNWtP4iCaVY+3mzD2HGTZQ=' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://netjvshhpnesuyrkhmcw.supabase.co https://flashcard-backend-staging.luiswgordon.workers.dev https://flashcard-backend.luiswgordon.workers.dev; img-src 'self' data: blob:; font-src 'self'; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'

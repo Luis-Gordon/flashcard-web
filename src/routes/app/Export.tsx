@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
 import { useExportCards } from "@/lib/hooks/useCards";
 import { useSettingsStore } from "@/stores/settings";
+import { useKeyboardShortcut, isMac } from "@/lib/hooks/useKeyboardShortcut";
 import { EXPORT_FORMATS, dispatchExport } from "@/lib/export";
 import { triggerDownload } from "@/lib/export/download";
 import type { ExportFormat } from "@/types/cards";
@@ -139,6 +140,13 @@ export default function Export() {
       exportAbortRef.current = null;
     }
   }, [exportCards, selectedFormat, formatOptions, currentConfig, addRecentDeckName]);
+
+  // Ctrl+E / ⌘+E to trigger export
+  useKeyboardShortcut(
+    { key: "e", ctrl: true },
+    handleExport,
+    { enabled: !isExporting && exportCards.length > 0 },
+  );
 
   // ── Empty state ──────────────────────────────────────────
   if (exportCards.length === 0) {
@@ -296,11 +304,15 @@ export default function Export() {
           </>
         )}
       </Button>
-      {isExporting && selectedFormat === "apkg" && exportCards.length > 100 && (
+      {isExporting && selectedFormat === "apkg" && exportCards.length > 100 ? (
         <p className="mt-2 text-center text-xs text-muted-foreground">
           Click the button above to cancel
         </p>
-      )}
+      ) : !isExporting ? (
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          {isMac() ? "⌘" : "Ctrl"}+E
+        </p>
+      ) : null}
     </div>
   );
 }

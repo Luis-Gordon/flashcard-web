@@ -90,9 +90,10 @@ src/
 │   │   ├── schema.ts           # Anki SQLite schema v11 + helpers (GUID, checksum, ID gen)
 │   │   └── builder.ts          # sql.js WASM + JSZip .apkg generator
 │   └── hooks/
-│       ├── useCards.ts         # Selectors: useCards, useCardActions, useLibrary, useLibrarySelection, useLibraryUndoDelete, useExportCards
-│       ├── useCardCount.ts     # Hybrid hook: store total → API fallback (nav badge)
-│       └── useUsage.ts         # Fetches /usage/current on mount
+│       ├── useCards.ts             # Selectors: useCards, useCardActions, useLibrary, useLibrarySelection, useLibraryUndoDelete, useExportCards
+│       ├── useCardCount.ts         # Hybrid hook: store total → API fallback (nav badge)
+│       ├── useKeyboardShortcut.ts  # Global keydown listener with Ctrl/⌘ + input suppression
+│       └── useUsage.ts             # Fetches /usage/current on mount
 └── stores/
     ├── auth.ts                 # Zustand: session, user, signIn/signUp/signOut
     ├── cards.ts                # Zustand: pending/library cards, generation, selection, export transfer
@@ -188,8 +189,20 @@ src/
 - Inline redirect script is CSP-hashed — if changed, recompute hash in `public/_headers`
 - Output: `public/{page}.html` (gitignored build artifacts)
 
+### Keyboard Shortcuts
+- `useKeyboardShortcut` hook in `src/lib/hooks/useKeyboardShortcut.ts`
+- Accepts `{ key, ctrl }` descriptor + callback + `{ enabled }` option
+- `ctrl: true` matches both `Ctrl` (Windows/Linux) and `⌘` (Mac) via `event.ctrlKey || event.metaKey`
+- Suppresses firing when focus is in `<input>`, `<textarea>`, or `<select>` — except `Ctrl+Enter` in `<textarea>` (generate form use case)
+- Callback stored in `useRef` to avoid stale closures
+- Active shortcuts: `Ctrl+Enter` → generate cards, `Ctrl+E` → export
+- `isMac()` helper detects platform for hint text (`⌘` vs `Ctrl`)
+
+### Staging Deployment
+- `npm run deploy:staging` builds with `--mode staging` (reads `.env.staging`) and deploys to `memogenesis-web-staging` Workers script
+- `wrangler.jsonc` has `env.staging` block with separate Workers name
+- CSP `connect-src` allows both staging and production backend URLs
+
 ## Not Yet Implemented
-- Keyboard shortcuts for export workflow (Phase 3F)
-- Staging deployment + backend integration testing (Phase 3F)
 - Stripe Checkout + billing portal (Phase 4)
 - Account settings + data export (Phase 5)

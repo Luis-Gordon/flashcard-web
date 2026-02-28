@@ -2,15 +2,17 @@
 React SPA for card generation, library management, .apkg export, and billing. Vite + TypeScript + Cloudflare Workers.
 
 ## Current Status
-- **Phase**: 3 — M5+M6 complete. Export page with 4 formats (APKG, CSV, Markdown, JSON), format registry, preview, download.
+- **Phase**: 3 complete (Phase 3F polish done). All generation, library, export, and keyboard shortcut features implemented.
+- **Keyboard shortcuts**: `Ctrl+Enter` (⌘+Enter on Mac) to generate, `Ctrl+E` (⌘+E) to export. Reusable `useKeyboardShortcut` hook with input field suppression.
 - **Export page**: Format selector (2×2 radio cards), dynamic options panel, collapsible preview, recent deck names, APKG builder (sql.js WASM + JSZip), code-split APKG chunk (~143 KB).
 - **Library page**: Paginated grid/list view, inline editing, bulk delete, domain badges, 3 empty states, filter toolbar (domain/search/tag/date/sort), undo-able single delete, export selected, card count badge in sidebar nav.
 - **Generate page**: Export button in CardReview summary bar → transfers selected cards to Export page.
+- **Staging deployment**: `npm run deploy:staging` available. `wrangler.jsonc` has staging env. CSP allows both staging + production backend.
 - **Backend prerequisite**: Phase 5b billing migration must be deployed to production before web app launch.
-- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (101/101 tests), build succeeds.
+- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (113/113 tests), build succeeds.
 
 ## Next Session Tasks
-1. **Phase 3F: Polish** — keyboard shortcuts, staging deployment, test against backend staging API
+1. **Phase 4: Billing** — Stripe Checkout integration, usage display, plan management
 
 ## CRITICAL Constraints
 - **NEVER** handle credit card details — Stripe Checkout (redirect) only
@@ -82,7 +84,7 @@ src/
 │   ├── apkg/                    # sql.js + JSZip .apkg generator
 │   │   ├── builder.ts
 │   │   └── schema.ts            # Anki SQLite schema constants
-│   └── hooks/                   # useCards, useCardCount, useUsage
+│   └── hooks/                   # useCards, useCardCount, useKeyboardShortcut, useUsage
 ├── stores/
 │   ├── cards.ts                 # Zustand card store
 │   └── settings.ts              # User preferences

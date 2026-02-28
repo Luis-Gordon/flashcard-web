@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "react-router";
 import { toast } from "sonner";
+import { useKeyboardShortcut, isMac } from "@/lib/hooks/useKeyboardShortcut";
 import {
   generateFormSchema,
   type GenerateFormValues,
@@ -117,7 +118,7 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
     if (content || domain) {
       setSearchParams({}, { replace: true });
     }
-   
+
   }, []);
 
   const onSubmit = async (values: GenerateFormValues) => {
@@ -161,6 +162,13 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
       });
     }
   };
+
+  // Ctrl+Enter / ⌘+Enter to submit from textarea
+  useKeyboardShortcut(
+    { key: "Enter", ctrl: true },
+    useCallback(() => { handleSubmit(onSubmit)(); }, [handleSubmit, onSubmit]),
+    { enabled: !isSubmitting },
+  );
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -359,6 +367,9 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
           </>
         )}
       </Button>
+      <p className="text-center text-xs text-muted-foreground">
+        {isMac() ? "⌘" : "Ctrl"}+Enter
+      </p>
     </form>
   );
 }

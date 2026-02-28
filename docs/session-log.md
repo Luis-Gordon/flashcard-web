@@ -487,3 +487,32 @@
 - ESLint: clean (0 warnings)
 - Vitest: 101/101 tests passing (96 → 101, +5 new tests)
 - Vite build: succeeds
+
+## Session 16 — 2026-02-28 — Phase 3F: Keyboard Shortcuts + Staging Deployment
+
+### Pre-work
+- Committed backlog fix (removed already-fixed critical bug entry) on `security/batch-5-csp-sanitize-auth`
+- Merged `security/batch-5-csp-sanitize-auth` → `main` (fast-forward, 8 commits)
+- Created `phase-3f/polish` branch from main
+
+### What was done
+
+**Keyboard shortcuts:**
+- Created `useKeyboardShortcut` hook (`src/lib/hooks/useKeyboardShortcut.ts`) — reusable global keydown listener with Ctrl/⌘ auto-detection, input field suppression (except Ctrl+Enter in textarea), enabled/disabled toggle, ref-based callback to prevent stale closures.
+- Added `isMac()` helper for platform-aware hint text (⌘ vs Ctrl).
+- Wired `Ctrl+Enter` in `GenerateForm.tsx` — triggers form submission from the content textarea. Added hint text below the Generate button.
+- Wired `Ctrl+E` in `Export.tsx` — triggers export when cards are loaded and not currently exporting. Added hint text below the Export button.
+- Wrote 12 unit tests (`tests/unit/keyboard-shortcut.test.ts`): fires on Ctrl+key, fires on Meta+key, skips without modifier, skips wrong key, case-insensitive matching, disabled flag, re-enable, input suppression for Ctrl+E, textarea suppression for Ctrl+E, Ctrl+Enter allowed in textarea, Ctrl+Enter blocked in input, cleanup on unmount.
+
+**Staging deployment config:**
+- Created `.env.staging` with staging backend URL + shared Supabase project.
+- Added `env.staging` to `wrangler.jsonc` with `memogenesis-web-staging` Workers name.
+- Added `build:staging` and `deploy:staging` scripts to `package.json`.
+- Added `.env.staging` to `.gitignore`.
+- Added production backend URL (`flashcard-backend.luiswgordon.workers.dev`) to CSP `connect-src` in `public/_headers`.
+
+### Quality gates
+- TypeScript strict: passing (0 errors)
+- ESLint: clean (0 warnings)
+- Vitest: 113/113 tests passing (101 → 113, +12 new keyboard shortcut tests)
+- Vite build: succeeds
