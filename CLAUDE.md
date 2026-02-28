@@ -20,6 +20,7 @@ React SPA for card generation, library management, .apkg export, and billing. Vi
 - **ALWAYS** include `product_source: 'web_app'` in every API request body
 - **ALWAYS** sanitize user-provided content before rendering (XSS prevention)
 - **ALWAYS** auth guard on all `/app/*` routes — redirect to login if unauthenticated
+- **ALWAYS** keep DOMPurify allowlist in `SanitizedHTML.tsx` aligned with the `fc-*` HTML contract — no tags beyond what backend prompts generate
 
 ## Commands
 ```bash
@@ -112,6 +113,15 @@ package.json
 - React Router 7 library mode — explicit route definitions in `App.tsx`
 - Components: one component per file, PascalCase filenames
 - Hooks: `use` prefix, one hook per file in `lib/hooks/`
+- Switch statements on union types must include a `default: { const _: never = x; throw new Error(...) }` exhaustive check
+
+### Zustand
+- Selector hooks MUST use `useShallow` — bare `useCardStore((s) => ({ ... }))` returns a new object every render, causing infinite re-render loops. Always: `useCardStore(useShallow((s) => ({ ... })))`
+- List item components that receive callbacks MUST use `React.memo` + parent `useCallback` — prevents O(N) child re-renders on every state change
+- Optimistic store mutations MUST snapshot state before mutating and rollback in catch — see `bulkDeleteLibraryCards` pattern in `stores/cards.ts`
+
+### Subscriptions
+- Supabase `onAuthStateChange` and similar listeners must capture the unsubscribe handle and call it before re-subscribing (see `stores/auth.ts`)
 
 ### Structured HTML Rendering
 The backend generates card content as structured HTML with `fc-*` CSS classes. The web app must render this HTML with a CSS stylesheet consistent with the Anki add-on's `FC_STYLESHEET` (see `flashcard-anki/src/styles/stylesheet.py`). Use `dangerouslySetInnerHTML` with DOMPurify sanitization for card previews.
@@ -119,7 +129,7 @@ The backend generates card content as structured HTML with `fc-*` CSS classes. T
 ## API Integration
 - **Base URLs**: staging `https://flashcard-backend-staging.luiswgordon.workers.dev`, production TBD
 - **Auth header**: `Authorization: Bearer {supabase_access_token}`
-- **Error handling**: Follow the error handling contract in root CLAUDE.md — handle all error codes (400-500)
+- **Error handling**: `api.ts` implements the error contract from root CLAUDE.md. 401 → auto sign-out via `notifyUnauthorized()`. 429 → auto-retry (max 2, respects `retry_after`, capped 60s). All other errors throw `ApiError` for callers to handle.
 - **Content limits**: Text 100KB, URL 100KB after extraction, PDF 10MB
 - **Key endpoints**: `/cards/generate`, `/cards` (library), `/usage/current`, `/billing/checkout`, `/billing/portal`
 
