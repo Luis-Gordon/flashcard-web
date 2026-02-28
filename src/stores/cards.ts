@@ -12,6 +12,7 @@ import type {
   UpdateCardRequest,
 } from "@/types/cards";
 import * as api from "@/lib/api";
+import { USAGE_CHANGED_EVENT } from "@/lib/api";
 
 interface CardState {
   // Generation state
@@ -108,6 +109,9 @@ export const useCardStore = create<CardState>((set, get) => ({
         isGenerating: false,
         selectedCardIds: new Set(cardsWithIds.map((c) => c.id)),
       });
+
+      // Notify sidebar usage display to refresh
+      window.dispatchEvent(new Event(USAGE_CHANGED_EVENT));
     } catch (error) {
       const message =
         error instanceof api.ApiError

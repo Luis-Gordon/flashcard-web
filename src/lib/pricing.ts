@@ -9,6 +9,11 @@ export interface PricingTier {
   features: string[];
 }
 
+/** Look up a PricingTier by the API-returned tier name (lowercase, e.g. "plus") */
+export function findTierByApiName(apiName: string): PricingTier | undefined {
+  return PRICING_TIERS.find((t) => t.name.toLowerCase() === apiName.toLowerCase());
+}
+
 export const PRICING_TIERS: PricingTier[] = [
   {
     name: "Free",

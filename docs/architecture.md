@@ -52,12 +52,12 @@ src/
 │       ├── Generate.tsx        # Form ↔ review toggle + export selected
 │       ├── Library.tsx         # Paginated grid/list, filters, undo delete, export selected
 │       ├── Export.tsx          # Format selector, options, preview, download
-│       ├── Billing.tsx         # Placeholder (Phase 4b)
+│       ├── Billing.tsx         # Plan display, usage, Stripe Checkout + Portal
 │       └── Settings.tsx        # Placeholder (Phase 5)
 ├── components/
 │   ├── AuthGuard.tsx           # Route guard: redirect if unauthenticated
 │   ├── MarketingLayout.tsx     # Header + footer for public pages
-│   ├── ui/                     # shadcn/ui components (24 installed)
+│   ├── ui/                     # shadcn/ui components (25 installed)
 │   ├── cards/
 │   │   ├── SanitizedHTML.tsx   # Shared DOMPurify HTML renderer (fc-* safe)
 │   │   ├── GenerateForm.tsx    # Domain/style/difficulty form + content textarea
@@ -66,11 +66,11 @@ src/
 │   │   ├── LibraryCardItem.tsx # Library card: grid/list, domain badge, expand, select
 │   │   └── LibraryToolbar.tsx  # Filter toolbar: domain, search, tag, date, sort + pills
 │   └── billing/
-│       └── UpgradeModal.tsx    # Usage exceeded → tier comparison dialog
+│       └── UpgradeModal.tsx    # Usage exceeded → tier comparison + Stripe Checkout redirect
 ├── lib/
-│   ├── api.ts                  # Backend API client (fetch + auth + product_source)
+│   ├── api.ts                  # Backend API client (fetch + auth + product_source + billing)
 │   ├── supabase.ts             # Supabase browser client (singleton)
-│   ├── pricing.ts              # Pricing tier constants
+│   ├── pricing.ts              # Pricing tier constants + findTierByApiName helper
 │   ├── utils.ts                # cn() utility (shadcn)
 │   ├── constants/
 │   │   └── domains.ts          # Shared DOMAIN_LABELS + DOMAIN_COLORS maps
@@ -212,6 +212,13 @@ docs/
 - `wrangler.jsonc` has `env.staging` block with separate Workers name
 - CSP `connect-src` allows both staging and production backend URLs
 
+### Billing (Phase 4b)
+- **Checkout flow**: `Billing.tsx` calls `createCheckoutSession(tier, successUrl, cancelUrl)` → redirects to Stripe Checkout → returns with `?checkout=success|canceled` → polls usage API for tier update (2s interval, 10s max)
+- **Portal flow**: Paid users click "Manage Billing" → `getBillingPortalUrl(returnUrl)` → redirects to Stripe Customer Portal
+- **UpgradeModal**: Triggered by 402 `USAGE_EXCEEDED` in `GenerateForm` → calls `createCheckoutSession()` directly (no intermediate billing page)
+- **Usage refresh**: `USAGE_CHANGED_EVENT` custom DOM event dispatched by card store after generation → `useUsage` hook listens and refetches → sidebar updates without coupling
+- **Components**: `Billing.tsx` (route page), `UpgradeModal.tsx` (dialog), `findTierByApiName()` (pricing helper)
+- **Types**: `BillingTier`, `SubscriptionStatus` (union types), `CheckoutResponse`, `PortalResponse`
+
 ## Not Yet Implemented
-- Stripe Checkout + billing portal (Phase 4b)
 - Account settings + data export (Phase 5)

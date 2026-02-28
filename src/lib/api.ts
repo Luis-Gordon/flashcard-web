@@ -7,6 +7,9 @@ import type {
   UsageResponse,
   UpdateCardRequest,
   LibraryCard,
+  BillingTier,
+  CheckoutResponse,
+  PortalResponse,
 } from "@/types/cards";
 
 export type ErrorCode =
@@ -256,4 +259,31 @@ export function updateCard(
 
 export function getUsage(): Promise<UsageResponse> {
   return apiRequest<UsageResponse>("/usage/current", { method: "GET" });
+}
+
+/** Custom DOM event dispatched after actions that change usage (e.g., card generation) */
+export const USAGE_CHANGED_EVENT = "memogenesis:usage-changed";
+
+// ---------------------------------------------------------------------------
+// Billing
+// ---------------------------------------------------------------------------
+
+export function createCheckoutSession(
+  tier: BillingTier,
+  successUrl: string,
+  cancelUrl: string,
+): Promise<CheckoutResponse> {
+  return apiRequest<CheckoutResponse>("/billing/checkout", {
+    method: "POST",
+    body: { tier, success_url: successUrl, cancel_url: cancelUrl },
+  });
+}
+
+export function getBillingPortalUrl(
+  returnUrl?: string,
+): Promise<PortalResponse> {
+  return apiRequest<PortalResponse>("/billing/portal", {
+    method: "GET",
+    params: returnUrl ? { return_url: returnUrl } : undefined,
+  });
 }

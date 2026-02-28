@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { UsageResponse } from "@/types/cards";
-import { getUsage } from "@/lib/api";
+import { getUsage, USAGE_CHANGED_EVENT } from "@/lib/api";
 
 export function useUsage() {
   const [usage, setUsage] = useState<UsageResponse | null>(null);
@@ -22,6 +22,13 @@ export function useUsage() {
 
   useEffect(() => {
     refetch();
+  }, [refetch]);
+
+  // Re-fetch when usage changes (e.g., after card generation)
+  useEffect(() => {
+    const handler = () => { refetch(); };
+    window.addEventListener(USAGE_CHANGED_EVENT, handler);
+    return () => window.removeEventListener(USAGE_CHANGED_EVENT, handler);
   }, [refetch]);
 
   return { usage, isLoading, error, refetch };

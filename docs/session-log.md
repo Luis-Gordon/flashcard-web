@@ -539,3 +539,30 @@
 ### Quality gates
 - No code changes — documentation only
 - Verified with grep: no stale phase references remain in either file
+
+## Session 18 — 2026-02-28 — Phase 4b: Billing & Stripe Checkout Integration
+
+### What was done
+- **Step 1 — Type narrowing**: Added `BillingTier`, `SubscriptionStatus` union types; narrowed `UsageResponse.tier`/`.status`; added `CheckoutResponse` and `PortalResponse` types.
+- **Step 2 — API methods**: Added `createCheckoutSession()` (POST /billing/checkout), `getBillingPortalUrl()` (GET /billing/portal), and `USAGE_CHANGED_EVENT` constant to `api.ts`.
+- **Step 3 — Usage refresh**: `useUsage` hook listens for `USAGE_CHANGED_EVENT` and refetches. Card store dispatches the event after successful generation. This fixes the known backlog item where sidebar usage counter didn't update after generation.
+- **Step 4 — Billing page**: Full rewrite of `Billing.tsx` placeholder. Sections: subscription warning banner (status-aware), current plan card with tier badge, usage card with progress bar + overage, conditional action buttons. Post-checkout handling: `?checkout=success` polls for tier update every 2s for 10s, `?checkout=canceled` shows info toast. URL params cleaned after processing.
+- **Step 5 — UpgradeModal**: Replaced `<Link to="/app/billing">` with actual `createCheckoutSession()` call. Per-button loading spinner, all buttons disabled during redirect, error toast on failure.
+- **Step 6 — Pricing helper**: Added `findTierByApiName()` to `pricing.ts` for looking up tier display data from API response.
+- **Step 7 — Tests**: 24 new tests (137 total): `billing-api.test.ts` (8), `billing.test.ts` (11), `usage-refresh.test.ts` (5). Fixed existing `cards.test.ts` mock to include `USAGE_CHANGED_EVENT` export.
+- **Step 8 — Quality gates**: All gates pass. Installed `alert` shadcn component. Billing chunk: 8.45 KB (3.10 KB gzip).
+
+### Architecture decisions
+- **Custom DOM events for cross-component refresh**: `USAGE_CHANGED_EVENT` uses `window.dispatchEvent()` / `addEventListener()` — zero coupling between card store and usage hook. No new dependencies or state lifting.
+- **Post-checkout polling**: `setInterval` for 10s max after Stripe redirect. Cleans up on unmount. URL params cleaned with `replace: true`.
+- **Per-button loading state**: `checkoutLoadingTier` tracks which upgrade button was clicked, enabling spinner on correct button while disabling all.
+
+### Quality gates
+- TypeScript strict: 0 errors
+- ESLint: 0 warnings
+- Vitest: 137/137 tests pass (24 new)
+- Vite build: succeeds
+
+### Next session tasks
+- **Backend prerequisite**: Deploy `product_source` fix to backend `CheckoutRequestSchema` before testing
+- **Phase 5**: Account settings, data export

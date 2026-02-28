@@ -12,6 +12,7 @@ vi.mock("@/lib/api", () => ({
   generateCards: (...args: unknown[]) => mockGenerateCards(...args),
   getCards: (...args: unknown[]) => mockGetCards(...args),
   deleteCard: (...args: unknown[]) => mockDeleteCard(...args),
+  USAGE_CHANGED_EVENT: "memogenesis:usage-changed",
   ApiError: class ApiError extends Error {
     constructor(
       message: string,

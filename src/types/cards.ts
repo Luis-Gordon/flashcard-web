@@ -74,6 +74,12 @@ export interface UpdateCardRequest {
 /** Supported export formats */
 export type ExportFormat = "apkg" | "csv" | "markdown" | "json";
 
+/** Billing tier names (matches backend) */
+export type BillingTier = "free" | "plus" | "pro";
+
+/** Subscription status (matches Stripe statuses used by backend) */
+export type SubscriptionStatus = "active" | "past_due" | "canceled" | "unpaid";
+
 /** Rejected card from backend */
 export interface RejectedCard {
   card: Card;
@@ -143,8 +149,8 @@ export interface CardFilters {
 /** Response from GET /usage/current */
 export interface UsageResponse {
   request_id: string;
-  tier: string;
-  status: string;
+  tier: BillingTier;
+  status: SubscriptionStatus;
   period: {
     start: string;
     end: string | null;
@@ -162,4 +168,16 @@ export interface UsageResponse {
     tts: number;
     image: number;
   };
+}
+
+/** Response from POST /billing/checkout */
+export interface CheckoutResponse {
+  request_id: string;
+  url: string;
+}
+
+/** Response from GET /billing/portal */
+export interface PortalResponse {
+  request_id: string;
+  url: string;
 }
