@@ -419,3 +419,34 @@
 - ESLint: clean (0 warnings)
 - Vitest: 62/62 tests passing (no test changes)
 - Vite build: succeeds, `dist/_headers` present
+
+## Session 14 — 2026-02-28 — Audit Batch 6: Tests & Cleanup (H4, L1, L2, L9, L10, L11)
+
+### What was done
+
+**H4 — APKG builder tests:**
+- Created `tests/unit/apkg-builder.test.ts` (12 tests). Mocks sql.js and jszip at module level. Covers validation (empty/overflow), database operations (schema DDL, col insert, note/card counts, tags formatting), ZIP packaging (file entries, result shape), and progress/cancellation (batch callbacks, abort signal, finally-block cleanup).
+
+**L10 — Download utility tests:**
+- Created `tests/unit/download.test.ts` (5 tests). Stubs `URL.createObjectURL`/`revokeObjectURL`. Tests Blob creation for string and ArrayBuffer content, anchor attributes, click trigger, and URL lifecycle.
+
+**L9 — Export formatter edge case tests:**
+- Appended 10 edge case tests to `tests/unit/export.test.ts`: CSV (empty tags, Unicode CJK+emoji, empty fields, special char tags), Markdown (single card no separator, filename sanitization, filename truncation at 50 chars), JSON (empty tags, Unicode, all-empty-strings card).
+
+**L11 — API error path tests:**
+- Appended 7 tests to `tests/unit/api.test.ts`: error status handling (400/402/409/413/500 with code, requestId, details preservation), network error (TypeError → status 0), timeout (AbortError → status 408).
+
+**L1 — Deleted 6 unused shadcn components:**
+- Removed `form.tsx`, `navigation-menu.tsx`, `radio-group.tsx`, `table.tsx`, `tabs.tsx`, `tooltip.tsx`. Zero imports confirmed across `src/`.
+
+**L2 — Removed unused `next-themes` dependency:**
+- `npm uninstall next-themes`. Zero imports confirmed.
+
+**L3 — Won't fix:**
+- `sharp` IS used by `scripts/generate-assets.ts`. Audit finding was incorrect.
+
+### Quality gates
+- TypeScript strict: passing (0 errors)
+- ESLint: clean (0 warnings)
+- Vitest: 96/96 tests passing (62 → 96, +34 new tests)
+- Vite build: succeeds

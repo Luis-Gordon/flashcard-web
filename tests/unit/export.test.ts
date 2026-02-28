@@ -273,3 +273,108 @@ describe("APKG schema helpers", () => {
     }
   });
 });
+
+// ── CSV Edge Cases ────────────────────────────────────────────
+
+describe("exportCsv — edge cases", () => {
+  const importCsv = () => import("@/lib/export/csv");
+
+  test("empty tags array with includeTags produces valid row", async () => {
+    const { exportCsv } = await importCsv();
+    const card = makeCard({ tags: [] });
+    const result = exportCsv([card], { includeTags: true });
+    const lines = (result.content as string).split("\n");
+    // Header + 1 data row + trailing newline
+    expect(lines.length).toBeGreaterThanOrEqual(2);
+    // No trailing comma or broken row
+    expect(lines[1]).toBeDefined();
+  });
+
+  test("Unicode content (CJK + emoji) appears verbatim", async () => {
+    const { exportCsv } = await importCsv();
+    const card = makeCard({ front: "日本語テスト 🎌", back: "漢字の答え 🇯🇵" });
+    const result = exportCsv([card], {});
+    expect(result.content).toContain("日本語テスト 🎌");
+    expect(result.content).toContain("漢字の答え 🇯🇵");
+  });
+
+  test("card with empty front and back produces valid CSV row", async () => {
+    const { exportCsv } = await importCsv();
+    const card = makeCard({ front: "", back: "" });
+    const result = exportCsv([card], {});
+    const lines = (result.content as string).split("\n").filter((l) => l.trim());
+    // Should still have header + at least one data row
+    expect(lines.length).toBeGreaterThanOrEqual(2);
+  });
+
+  test("tags with special chars are joined and escaped correctly", async () => {
+    const { exportCsv } = await importCsv();
+    const card = makeCard({ tags: ["c++", "node.js"] });
+    const result = exportCsv([card], { includeTags: true });
+    expect(result.content).toContain("c++;node.js");
+  });
+});
+
+// ── Markdown Edge Cases ───────────────────────────────────────
+
+describe("exportMarkdown — edge cases", () => {
+  const importMd = () => import("@/lib/export/markdown");
+
+  test("single card produces no --- separator", async () => {
+    const { exportMarkdown } = await importMd();
+    const result = exportMarkdown([makeCard()], { deckName: "Test" });
+    const content = result.content as string;
+    expect(content).not.toContain("\n---\n");
+  });
+
+  test("deck name with special chars is sanitized in filename", async () => {
+    const { exportMarkdown } = await importMd();
+    const result = exportMarkdown([makeCard()], {
+      deckName: "My Deck! (2026)",
+    });
+    expect(result.filename).toBe("My_Deck___2026_.md");
+  });
+
+  test("100-char deck name is truncated to 50 chars in filename", async () => {
+    const { exportMarkdown } = await importMd();
+    const longName = "A".repeat(100);
+    const result = exportMarkdown([makeCard()], { deckName: longName });
+    // Filename stem (before .md) should be at most 50 chars
+    const stem = result.filename.replace(/\.md$/, "");
+    expect(stem.length).toBeLessThanOrEqual(50);
+  });
+});
+
+// ── JSON Edge Cases ───────────────────────────────────────────
+
+describe("exportJson — edge cases", () => {
+  const importJson = () => import("@/lib/export/json");
+
+  test("empty tags array serializes as []", async () => {
+    const { exportJson } = await importJson();
+    const card = makeCard({ tags: [] });
+    const result = exportJson([card], {});
+    const parsed = JSON.parse(result.content as string);
+    expect(parsed[0].tags).toEqual([]);
+  });
+
+  test("Unicode content produces valid JSON", async () => {
+    const { exportJson } = await importJson();
+    const card = makeCard({ front: "日本語 🎌", back: "答え" });
+    const result = exportJson([card], {});
+    const parsed = JSON.parse(result.content as string);
+    expect(parsed[0].front).toBe("日本語 🎌");
+    expect(parsed[0].back).toBe("答え");
+  });
+
+  test("card with all empty strings produces valid JSON object", async () => {
+    const { exportJson } = await importJson();
+    const card = makeCard({ front: "", back: "", notes: "", tags: [] });
+    const result = exportJson([card], {});
+    const parsed = JSON.parse(result.content as string);
+    expect(parsed[0].front).toBe("");
+    expect(parsed[0].back).toBe("");
+    expect(parsed[0].notes).toBe("");
+    expect(parsed[0].tags).toEqual([]);
+  });
+});

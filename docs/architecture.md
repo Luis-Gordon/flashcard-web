@@ -57,7 +57,7 @@ src/
 ├── components/
 │   ├── AuthGuard.tsx           # Route guard: redirect if unauthenticated
 │   ├── MarketingLayout.tsx     # Header + footer for public pages
-│   ├── ui/                     # shadcn/ui components (30 installed)
+│   ├── ui/                     # shadcn/ui components (24 installed)
 │   ├── cards/
 │   │   ├── SanitizedHTML.tsx   # Shared DOMPurify HTML renderer (fc-* safe)
 │   │   ├── GenerateForm.tsx    # Domain/style/difficulty form + content textarea

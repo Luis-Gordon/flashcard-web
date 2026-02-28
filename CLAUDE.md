@@ -7,7 +7,7 @@ React SPA for card generation, library management, .apkg export, and billing. Vi
 - **Library page**: Paginated grid/list view, inline editing, bulk delete, domain badges, 3 empty states, filter toolbar (domain/search/tag/date/sort), undo-able single delete, export selected, card count badge in sidebar nav.
 - **Generate page**: Export button in CardReview summary bar → transfers selected cards to Export page.
 - **Backend prerequisite**: Phase 5b billing migration must be deployed to production before web app launch.
-- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (62/62 tests), build succeeds.
+- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (96/96 tests), build succeeds.
 
 ## Next Session Tasks
 1. **Phase 3F: Polish** — keyboard shortcuts, staging deployment, test against backend staging API

@@ -261,3 +261,155 @@ describe("429 Rate Limited retry", () => {
     expect(mockFetch).toHaveBeenCalledOnce();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Error Status Handling
+// ---------------------------------------------------------------------------
+
+describe("Error status handling", () => {
+  it("400 returns ApiError with VALIDATION_ERROR code and details", async () => {
+    mockFetch.mockResolvedValue(
+      jsonResponse(400, {
+        error: "Invalid input",
+        code: "VALIDATION_ERROR",
+        request_id: "req-400",
+        details: { field: "content", message: "required" },
+      }),
+    );
+
+    try {
+      await apiRequest("/test", { method: "POST", body: { data: "" } });
+      expect.unreachable("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiError);
+      const e = error as ApiError;
+      expect(e.status).toBe(400);
+      expect(e.code).toBe("VALIDATION_ERROR");
+      expect(e.details).toEqual({ field: "content", message: "required" });
+    }
+  });
+
+  it("402 returns ApiError with USAGE_EXCEEDED code", async () => {
+    mockFetch.mockResolvedValue(
+      jsonResponse(402, {
+        error: "Usage exceeded",
+        code: "USAGE_EXCEEDED",
+        request_id: "req-402",
+      }),
+    );
+
+    try {
+      await apiRequest("/test");
+      expect.unreachable("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiError);
+      const e = error as ApiError;
+      expect(e.status).toBe(402);
+      expect(e.code).toBe("USAGE_EXCEEDED");
+    }
+  });
+
+  it("409 returns ApiError with CONFLICT code", async () => {
+    mockFetch.mockResolvedValue(
+      jsonResponse(409, {
+        error: "Account already exists",
+        code: "CONFLICT",
+        request_id: "req-409",
+      }),
+    );
+
+    try {
+      await apiRequest("/test");
+      expect.unreachable("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiError);
+      const e = error as ApiError;
+      expect(e.status).toBe(409);
+      expect(e.code).toBe("CONFLICT");
+    }
+  });
+
+  it("413 returns ApiError with CONTENT_TOO_LARGE code", async () => {
+    mockFetch.mockResolvedValue(
+      jsonResponse(413, {
+        error: "Content too large",
+        code: "CONTENT_TOO_LARGE",
+        request_id: "req-413",
+      }),
+    );
+
+    try {
+      await apiRequest("/test");
+      expect.unreachable("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiError);
+      const e = error as ApiError;
+      expect(e.status).toBe(413);
+      expect(e.code).toBe("CONTENT_TOO_LARGE");
+    }
+  });
+
+  it("500 returns ApiError with INTERNAL_ERROR code and preserves requestId", async () => {
+    mockFetch.mockResolvedValue(
+      jsonResponse(500, {
+        error: "Something went wrong",
+        code: "INTERNAL_ERROR",
+        request_id: "req-500-abc",
+      }),
+    );
+
+    try {
+      await apiRequest("/test");
+      expect.unreachable("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiError);
+      const e = error as ApiError;
+      expect(e.status).toBe(500);
+      expect(e.code).toBe("INTERNAL_ERROR");
+      expect(e.requestId).toBe("req-500-abc");
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Network Errors
+// ---------------------------------------------------------------------------
+
+describe("Network errors", () => {
+  it("fetch rejection with TypeError maps to status 0 network error", async () => {
+    mockFetch.mockRejectedValue(new TypeError("Failed to fetch"));
+
+    try {
+      await apiRequest("/test");
+      expect.unreachable("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiError);
+      const e = error as ApiError;
+      expect(e.status).toBe(0);
+      expect(e.message).toBe("Network error");
+    }
+  });
+
+  it("timeout produces status 408 with 'Request timed out'", async () => {
+    // fetch that respects AbortSignal — rejects with AbortError when signal fires
+    mockFetch.mockImplementation(
+      (_url: string, init: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init.signal?.addEventListener("abort", () => {
+            reject(new DOMException("The operation was aborted.", "AbortError"));
+          });
+        }),
+    );
+
+    const resultPromise = apiRequest("/test", { timeout: 100 }).catch((e: unknown) => e);
+
+    // Advance past the 100ms timeout
+    await vi.advanceTimersByTimeAsync(200);
+
+    const error = await resultPromise;
+    expect(error).toBeInstanceOf(ApiError);
+    const e = error as ApiError;
+    expect(e.status).toBe(408);
+    expect(e.message).toBe("Request timed out");
+  });
+});
