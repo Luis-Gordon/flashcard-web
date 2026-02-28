@@ -2,7 +2,7 @@
 React SPA for card generation, library management, .apkg export, and billing. Vite + TypeScript + Cloudflare Workers.
 
 ## Current Status
-- **Phase**: 3 complete (Phase 3F polish done). All generation, library, export, and keyboard shortcut features implemented.
+- **Phase**: 4a complete (Phases 1–3 + 4a done). All generation, library, export, and keyboard shortcut features implemented.
 - **Keyboard shortcuts**: `Ctrl+Enter` (⌘+Enter on Mac) to generate, `Ctrl+E` (⌘+E) to export. Reusable `useKeyboardShortcut` hook with input field suppression.
 - **Export page**: Format selector (2×2 radio cards), dynamic options panel, collapsible preview, recent deck names, APKG builder (sql.js WASM + JSZip), code-split APKG chunk (~143 KB).
 - **Library page**: Paginated grid/list view, inline editing, bulk delete, domain badges, 3 empty states, filter toolbar (domain/search/tag/date/sort), undo-able single delete, export selected, card count badge in sidebar nav.
@@ -12,7 +12,7 @@ React SPA for card generation, library management, .apkg export, and billing. Vi
 - **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (113/113 tests), build succeeds.
 
 ## Next Session Tasks
-1. **Phase 4: Billing** — Stripe Checkout integration, usage display, plan management
+1. **Phase 4b: Billing** — Stripe Checkout integration, usage display, plan management
 
 ## CRITICAL Constraints
 - **NEVER** handle credit card details — Stripe Checkout (redirect) only
