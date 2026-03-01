@@ -617,3 +617,57 @@
 
 ### Next session tasks
 - **Phase 5 polish**: 404 page, dark mode
+
+## Session 20 — 2026-03-01 — Phase 5 Polish: 404 Page + Dark Mode
+
+### What was done
+
+**404 page:**
+- Created `src/routes/NotFound.tsx` — centered hero layout with `FileQuestion` icon, "404" heading, two CTA buttons (Go home / Go to app), wrapped in `MarketingLayout` for consistent header/footer.
+- Added lazy import + `path="*"` catch-all route as last child in `App.tsx`.
+
+**Dark mode — theme infrastructure:**
+- Added `ThemeMode` type (`"system" | "light" | "dark"`), `themeMode` state, and `setThemeMode` action to `stores/settings.ts`. Added `subscribeWithSelector` middleware for slice-level subscriptions.
+- Added `applyTheme()` in `main.tsx` — reads `themeMode`, resolves via `matchMedia` for "system", toggles `.dark` class on `<html>`. Runs before `createRoot()` to prevent FOWT.
+- Subscribed to store changes: `useSettingsStore.subscribe((s) => s.themeMode, applyTheme)`.
+- Added `matchMedia("prefers-color-scheme: dark")` change listener for live OS preference sync.
+
+**Dark mode — Settings UI:**
+- Added Appearance card to `Settings.tsx` between Account Info and Change Password.
+- 3-option button group (System/Light/Dark) with `Monitor`/`Sun`/`Moon` lucide icons.
+
+**Toast theming:**
+- Added `useResolvedTheme()` hook in `App.tsx` — uses `useSyncExternalStore` + `MutationObserver` to observe `.dark` class on `<html>`.
+- Passes resolved `"light" | "dark"` to Sonner `<Toaster theme={resolvedTheme} />`.
+- Removed hardcoded `theme="light"` from `sonner.tsx` wrapper.
+
+**Tests:**
+- `tests/unit/not-found.test.ts` (5 tests): heading, subtitle, layout, links
+- `tests/unit/theme.test.ts` (8 tests): store defaults, setThemeMode, applyTheme dark/light/system
+
+### New files
+- `src/routes/NotFound.tsx`
+- `tests/unit/not-found.test.ts`
+- `tests/unit/theme.test.ts`
+
+### Modified files
+- `src/App.tsx` — NotFound lazy import, catch-all route, `useResolvedTheme`, Toaster theme prop
+- `src/stores/settings.ts` — `ThemeMode`, `themeMode`, `setThemeMode`, `subscribeWithSelector`
+- `src/main.tsx` — `applyTheme()`, store subscription, matchMedia listener
+- `src/routes/app/Settings.tsx` — Appearance card with theme toggle
+- `src/components/ui/sonner.tsx` — Removed hardcoded `theme="light"`
+
+### Architecture decisions
+- **`applyTheme()` before `createRoot()`**: Synchronous DOM class toggle before React renders the first frame prevents flash of wrong theme. The `.dark` class drives CSS variable overrides immediately.
+- **`useSyncExternalStore` + MutationObserver for toast theme**: Decouples Sonner from the Zustand store. Observes the actual `.dark` class on `<html>` — guaranteed consistent with what the user sees regardless of source (store change, OS change, DevTools).
+- **`subscribeWithSelector` middleware**: Enables subscribing to a specific slice (`themeMode`) so `applyTheme` only fires when the theme actually changes, not on every store update.
+- **Mocked store in tests**: jsdom + Node 22 has a broken `localStorage` stub (no `setItem`). Theme tests mock the store module to isolate DOM class logic from Zustand persist internals.
+
+### Quality gates
+- TypeScript strict: 0 errors
+- ESLint: 0 warnings
+- Vitest: 163/163 tests pass (150 → 163, +13 new)
+- Vite build: succeeds (NotFound chunk: 1.44 KB, Settings chunk: 9.46 KB)
+
+### Next session tasks
+- Production deployment prep

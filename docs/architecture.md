@@ -34,8 +34,8 @@ Browser → Cloudflare Workers (static) → SPA
 
 ```
 src/
-├── main.tsx                    # Entry — initializes auth, renders App
-├── App.tsx                     # Route definitions (BrowserRouter) + lazy loading
+├── main.tsx                    # Entry — initializes auth, applies theme, renders App
+├── App.tsx                     # Route definitions (BrowserRouter) + lazy loading + useResolvedTheme
 ├── index.css                   # Tailwind v4 + shadcn CSS variables
 ├── vite-env.d.ts               # ImportMetaEnv types
 ├── types/
@@ -47,13 +47,14 @@ src/
 │   ├── Terms.tsx               # Terms of service
 │   ├── Login.tsx               # Auth: login form
 │   ├── Signup.tsx              # Auth: signup form
+│   ├── NotFound.tsx            # 404 catch-all page
 │   └── app/
 │       ├── AppLayout.tsx       # Sidebar nav + usage display + card count badge + outlet
 │       ├── Generate.tsx        # Form ↔ review toggle + export selected
 │       ├── Library.tsx         # Paginated grid/list, filters, undo delete, export selected
 │       ├── Export.tsx          # Format selector, options, preview, download
 │       ├── Billing.tsx         # Plan display, usage, Stripe Checkout + Portal
-│       └── Settings.tsx        # Account info, password, data export, delete
+│       └── Settings.tsx        # Account info, appearance, password, data export, delete
 ├── components/
 │   ├── AuthGuard.tsx           # Route guard: redirect if unauthenticated
 │   ├── MarketingLayout.tsx     # Header + footer for public pages
@@ -163,9 +164,16 @@ docs/
 - `useCardCount` hook: reads `libraryPagination.total` from Zustand store when available; otherwise fires lightweight `getCards({ page: 1, limit: 1 })` to fetch just the total. Renders as `Badge` on the Library nav item (desktop + mobile). Caps display at "999+".
 
 ### Settings Store
-- First store using Zustand `persist` middleware with `create<T>()(...)` double-call syntax
+- Zustand `persist` + `subscribeWithSelector` middleware with `create<T>()(...)` double-call syntax
 - localStorage key: `memogenesis-settings`
-- Stores `libraryViewMode` (grid/list) and `recentDeckNames` (max 5, MRU order)
+- Stores `libraryViewMode` (grid/list), `recentDeckNames` (max 5, MRU order), and `themeMode` (`"system"` | `"light"` | `"dark"`)
+
+### Theme (Dark Mode)
+- **CSS infrastructure**: `.dark` class on `<html>` toggles 40+ OKLCH CSS variables in `index.css`. shadcn components use `dark:` variants automatically.
+- **Initialization**: `applyTheme()` in `main.tsx` runs synchronously before `createRoot()` to prevent flash of wrong theme (FOWT).
+- **Reactivity**: `useSettingsStore.subscribe((s) => s.themeMode, applyTheme)` re-applies on preference change. `matchMedia("prefers-color-scheme: dark")` listener re-applies in "system" mode when OS preference changes.
+- **Toast theming**: `useResolvedTheme()` in `App.tsx` observes `.dark` class on `<html>` via `useSyncExternalStore` + `MutationObserver`, passes resolved `"light" | "dark"` to Sonner `<Toaster theme={...} />`.
+- **Settings UI**: Appearance card in Settings with 3-button group (Monitor/Sun/Moon icons).
 
 ### Export Page
 - **Entry points**: Library → "Export selected" and Generate → "Export N" both transfer cards via `setExportCards()` in the Zustand store, then navigate to `/app/export`.
@@ -179,7 +187,7 @@ docs/
 - **Download**: `triggerDownload()` creates object URL → hidden `<a>` click → revoke. Works for both string (CSV/Markdown/JSON) and ArrayBuffer (APKG).
 
 ### Code Splitting
-- All 11 route pages are lazy-loaded via `React.lazy()` + `<Suspense>`
+- All 12 route pages are lazy-loaded via `React.lazy()` + `<Suspense>`
 - `AppLayout` and `AuthGuard` remain eagerly loaded (needed immediately)
 - Vite automatically creates separate chunks per lazy route
 - Index chunk: ~581 KB; route chunks: 0.4–88 KB each
@@ -188,6 +196,7 @@ docs/
 - Library mode: `<BrowserRouter>` → `<Routes>` → `<Route>`
 - Public routes: `/`, `/pricing`, `/privacy`, `/terms`, `/login`, `/signup`
 - Protected routes: `/app/*` wrapped in `<AuthGuard>` → `<AppLayout>`
+- Catch-all: `path="*"` → `<NotFound />` (404 page with MarketingLayout)
 - SPA fallback via `wrangler.jsonc` `not_found_handling: "single-page-application"`
 
 ### Prerender (SEO)
@@ -222,7 +231,7 @@ docs/
 - **Types**: `BillingTier`, `SubscriptionStatus` (union types), `CheckoutResponse`, `PortalResponse`
 
 ### Account Settings (Phase 5a)
-- **Settings page** (`Settings.tsx`): 4-section layout (Account Info, Change Password, Data Export, Danger Zone)
+- **Settings page** (`Settings.tsx`): 5-section layout (Account Info, Appearance, Change Password, Data Export, Danger Zone)
 - **Change password**: `react-hook-form` + `zodResolver(changePasswordSchema)` → `useAuthStore.updatePassword()` → `supabase.auth.updateUser()`
 - **Data export**: `exportAccountData()` (GET `/account/export`) → `triggerDownload()` as JSON
 - **Account deletion**: Controlled `AlertDialog` with email confirmation → `deleteAccount()` (DELETE `/account` with `{ confirm: true }`) → sequential `signOut()` → `navigate("/")`
@@ -230,4 +239,4 @@ docs/
 - **Types**: `AccountExportResponse`, `DeleteAccountResponse`
 
 ## Not Yet Implemented
-- 404 page, dark mode (Phase 5 polish)
+- Production deployment (production env vars, CSP production backend URL)

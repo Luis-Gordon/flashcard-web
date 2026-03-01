@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useAuthStore } from "@/stores/auth";
+import { useSettingsStore, type ThemeMode } from "@/stores/settings";
 import {
   changePasswordSchema,
   type ChangePasswordValues,
@@ -29,6 +30,9 @@ import {
   Loader2,
   Lock,
   Mail,
+  Monitor,
+  Moon,
+  Sun,
   Trash2,
   User,
   CalendarDays,
@@ -53,6 +57,8 @@ function formatDate(iso: string): string {
 export default function Settings() {
   const navigate = useNavigate();
   const { user, signOut, updatePassword } = useAuthStore();
+  const themeMode = useSettingsStore((s) => s.themeMode);
+  const setThemeMode = useSettingsStore((s) => s.setThemeMode);
 
   // Password form
   const {
@@ -150,6 +156,41 @@ export default function Settings() {
                 {user?.created_at ? formatDate(user.created_at) : "—"}
               </p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Appearance */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <Sun className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base">Appearance</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Choose how Memogenesis looks to you. Select a theme or sync with
+            your operating system.
+          </p>
+          <div className="flex gap-1">
+            {(
+              [
+                { value: "system", label: "System", icon: Monitor },
+                { value: "light", label: "Light", icon: Sun },
+                { value: "dark", label: "Dark", icon: Moon },
+              ] as const
+            ).map(({ value, label, icon: Icon }) => (
+              <Button
+                key={value}
+                variant={themeMode === value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setThemeMode(value as ThemeMode)}
+              >
+                <Icon className="mr-1.5 h-4 w-4" />
+                {label}
+              </Button>
+            ))}
           </div>
         </CardContent>
       </Card>

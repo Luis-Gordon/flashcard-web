@@ -1,8 +1,24 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useSyncExternalStore } from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthGuard } from "@/components/AuthGuard";
 import AppLayout from "@/routes/app/AppLayout";
+
+/** Resolves the current theme by reading the .dark class on <html>. */
+function useResolvedTheme(): "light" | "dark" {
+  return useSyncExternalStore(
+    (cb) => {
+      const observer = new MutationObserver(cb);
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+      return () => observer.disconnect();
+    },
+    () =>
+      document.documentElement.classList.contains("dark") ? "dark" : "light",
+  );
+}
 
 // Lazy-loaded route pages — each becomes its own chunk
 const Landing = lazy(() => import("@/routes/Landing"));
@@ -16,6 +32,7 @@ const Library = lazy(() => import("@/routes/app/Library"));
 const Export = lazy(() => import("@/routes/app/Export"));
 const Billing = lazy(() => import("@/routes/app/Billing"));
 const Settings = lazy(() => import("@/routes/app/Settings"));
+const NotFound = lazy(() => import("@/routes/NotFound"));
 
 function RouteSpinner() {
   return (
@@ -26,6 +43,8 @@ function RouteSpinner() {
 }
 
 export function App() {
+  const resolvedTheme = useResolvedTheme();
+
   return (
     <BrowserRouter>
       <Suspense fallback={<RouteSpinner />}>
@@ -45,9 +64,10 @@ export function App() {
               <Route path="settings" element={<Settings />} />
             </Route>
           </Route>
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
-      <Toaster />
+      <Toaster theme={resolvedTheme} />
     </BrowserRouter>
   );
 }
