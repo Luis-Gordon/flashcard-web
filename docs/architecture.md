@@ -197,6 +197,7 @@ docs/
 - All interpolated values are HTML-escaped; JSON-LD uses `JSON.stringify` (not template literals)
 - Inline redirect script is CSP-hashed — if changed, recompute hash in `public/_headers`
 - Output: `public/{page}.html` (gitignored build artifacts)
+- **SSR safety**: Modules imported transitively during prerender must handle `import.meta.env` being `undefined` under `tsx` (Node.js). See `supabase.ts` for the guard pattern (optional-chain env access + `typeof window` gate on client creation).
 
 ### Keyboard Shortcuts
 - `useKeyboardShortcut` hook in `src/lib/hooks/useKeyboardShortcut.ts`

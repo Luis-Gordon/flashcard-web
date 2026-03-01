@@ -596,3 +596,24 @@
 
 ### Next session tasks
 - **Phase 5 polish**: 404 page, dark mode, data export from Settings
+
+## Session 19 — 2026-03-01 — Fix Phase 5a Build Failure + CSP Violation
+
+### What was done
+- **Fix 1 — SSR-safe Supabase init**: Phase 5a's `MarketingLayout` → `useAuthStore` → `supabase.ts` import chain caused prerender to crash (`import.meta.env` is `undefined` under `tsx`/Node.js). Fixed with optional-chain `import.meta.env?.` + `typeof window` guard on both the env throw and `createClient()` call.
+- **Fix 2 — CSP for Zod v4**: Added `'unsafe-eval'` to `script-src` in `public/_headers`. Zod v4 uses code generation for compiled schema validators at runtime, which was blocked by CSP.
+- **Doc update**: Added SSR safety note to Prerender section in `architecture.md`.
+
+### Architecture decisions
+- **Placeholder Supabase client in SSR**: During prerender, `supabase` is `undefined as unknown as SupabaseClient` — safe because no Supabase calls are made outside the browser. This avoids Supabase's internal URL validation which throws on empty strings.
+- **`'unsafe-eval'` trade-off**: Zod v4's compiled-schema architecture requires eval-like capabilities. Alternative was downgrading to Zod v3 (interpreter-based) but that would cascade across all schemas and hookform resolver config.
+
+### Quality gates
+- TypeScript strict: 0 errors
+- ESLint: 0 warnings
+- Vitest: 150/150 tests pass
+- Prerender: 4/4 pages
+- Vite build: succeeds
+
+### Next session tasks
+- **Phase 5 polish**: 404 page, dark mode

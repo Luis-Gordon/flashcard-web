@@ -128,6 +128,9 @@ package.json
 ### Subscriptions
 - Supabase `onAuthStateChange` and similar listeners must capture the unsubscribe handle and call it before re-subscribing (see `stores/auth.ts`)
 
+### SSR / Prerender Safety
+- Modules imported transitively during prerender must handle `import.meta.env` being `undefined` under `tsx` (Node.js). Use optional-chain `import.meta.env?.` and `typeof window !== "undefined"` guards around browser-only side effects. See `supabase.ts` for the pattern.
+
 ### Structured HTML Rendering
 The backend generates card content as structured HTML with `fc-*` CSS classes. The web app must render this HTML with a CSS stylesheet consistent with the Anki add-on's `FC_STYLESHEET` (see `flashcard-anki/src/styles/stylesheet.py`). Use `dangerouslySetInnerHTML` with DOMPurify sanitization for card previews.
 
