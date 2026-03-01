@@ -10,6 +10,8 @@ import type {
   BillingTier,
   CheckoutResponse,
   PortalResponse,
+  AccountExportResponse,
+  DeleteAccountResponse,
 } from "@/types/cards";
 
 export type ErrorCode =
@@ -285,5 +287,23 @@ export function getBillingPortalUrl(
   return apiRequest<PortalResponse>("/billing/portal", {
     method: "GET",
     params: returnUrl ? { return_url: returnUrl } : undefined,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Account
+// ---------------------------------------------------------------------------
+
+export function exportAccountData(): Promise<AccountExportResponse> {
+  return apiRequest<AccountExportResponse>("/account/export", {
+    method: "GET",
+    timeout: 30_000,
+  });
+}
+
+export function deleteAccount(): Promise<DeleteAccountResponse> {
+  return apiRequest<DeleteAccountResponse>("/account", {
+    method: "DELETE",
+    body: { confirm: true },
   });
 }

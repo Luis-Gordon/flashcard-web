@@ -181,3 +181,22 @@ export interface PortalResponse {
   request_id: string;
   url: string;
 }
+
+/** Response from GET /account/export */
+export interface AccountExportResponse {
+  request_id: string;
+  account: {
+    email: string;
+    created_at: string;
+    [key: string]: unknown;
+  };
+  cards: LibraryCard[];
+  usage_records: unknown[];
+  generation_requests: unknown[];
+}
+
+/** Response from DELETE /account */
+export interface DeleteAccountResponse {
+  request_id: string;
+  deleted: boolean;
+}

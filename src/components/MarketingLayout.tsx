@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { useState } from "react";
+import { useAuthStore } from "@/stores/auth";
 
 const NAV_LINKS = [
   { href: "/#features", label: "Features" },
@@ -17,6 +18,7 @@ const NAV_LINKS = [
 export function MarketingLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { session } = useAuthStore();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -38,14 +40,20 @@ export function MarketingLayout({ children }: { children: React.ReactNode }) {
                 {label}
               </Link>
             ))}
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" asChild>
-                <Link to="/login">Log in</Link>
-              </Button>
+            {session ? (
               <Button asChild>
-                <Link to="/signup">Get Started</Link>
+                <Link to="/app">Go to App</Link>
               </Button>
-            </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" asChild>
+                  <Link to="/login">Log in</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/signup">Get Started</Link>
+                </Button>
+              </div>
+            )}
           </nav>
 
           {/* Mobile nav */}
@@ -72,16 +80,26 @@ export function MarketingLayout({ children }: { children: React.ReactNode }) {
                   </Link>
                 ))}
                 <div className="mt-4 flex flex-col gap-2">
-                  <Button variant="outline" asChild>
-                    <Link to="/login" onClick={() => setMobileOpen(false)}>
-                      Log in
-                    </Link>
-                  </Button>
-                  <Button asChild>
-                    <Link to="/signup" onClick={() => setMobileOpen(false)}>
-                      Get Started
-                    </Link>
-                  </Button>
+                  {session ? (
+                    <Button asChild>
+                      <Link to="/app" onClick={() => setMobileOpen(false)}>
+                        Go to App
+                      </Link>
+                    </Button>
+                  ) : (
+                    <>
+                      <Button variant="outline" asChild>
+                        <Link to="/login" onClick={() => setMobileOpen(false)}>
+                          Log in
+                        </Link>
+                      </Button>
+                      <Button asChild>
+                        <Link to="/signup" onClick={() => setMobileOpen(false)}>
+                          Get Started
+                        </Link>
+                      </Button>
+                    </>
+                  )}
                 </div>
               </nav>
             </SheetContent>

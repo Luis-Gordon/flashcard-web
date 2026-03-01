@@ -2,7 +2,9 @@
 React SPA for card generation, library management, .apkg export, and billing. Vite + TypeScript + Cloudflare Workers.
 
 ## Current Status
-- **Phase**: 4b complete (Phases 1–4 done). All generation, library, export, billing, and keyboard shortcut features implemented.
+- **Phase**: 5a complete (Phases 1–5a done). All generation, library, export, billing, keyboard shortcut, and account settings features implemented.
+- **Settings page**: 4-section layout — Account Info (email + member since), Change Password (react-hook-form + Zod), Data Export (GDPR JSON download), Danger Zone (email-confirmed account deletion).
+- **Auth-aware marketing header**: Shows "Go to App" when authenticated, login/signup buttons when not.
 - **Billing page**: Current plan display with tier badge, usage progress bar with overage, Stripe Checkout redirect for upgrades, Customer Portal for subscription management, post-checkout polling for tier updates.
 - **UpgradeModal**: Wired to Stripe Checkout — opens on 402 `USAGE_EXCEEDED`, per-button loading, error toasts.
 - **Usage refresh**: Sidebar usage counter auto-refreshes after card generation via `USAGE_CHANGED_EVENT` custom DOM event.
@@ -12,10 +14,10 @@ React SPA for card generation, library management, .apkg export, and billing. Vi
 - **Generate page**: Export button in CardReview summary bar → transfers selected cards to Export page.
 - **Staging deployment**: `npm run deploy:staging` available. `wrangler.jsonc` has staging env. CSP allows both staging + production backend.
 - **Backend prerequisite**: Deploy `product_source` fix to `CheckoutRequestSchema` before billing can be tested end-to-end.
-- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (137/137 tests), build succeeds.
+- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (150/150 tests), build succeeds.
 
 ## Next Session Tasks
-1. **Phase 5: Account Settings** — Account settings page, data export
+1. **Phase 5 polish**: 404 page, dark mode
 
 ## CRITICAL Constraints
 - **NEVER** handle credit card details — Stripe Checkout (redirect) only

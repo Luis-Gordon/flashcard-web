@@ -566,3 +566,33 @@
 ### Next session tasks
 - **Backend prerequisite**: Deploy `product_source` fix to backend `CheckoutRequestSchema` before testing
 - **Phase 5**: Account settings, data export
+
+## Session 18 — 2026-03-01 — Phase 5a: Account Settings
+
+### What was done
+- **Step 0 — Auth-aware marketing header**: `MarketingLayout.tsx` now checks `useAuthStore` for a session. Authenticated users see a "Go to App" button instead of login/signup buttons. Applied to both desktop nav and mobile Sheet.
+- **Step 1 — Account types**: Added `AccountExportResponse` and `DeleteAccountResponse` interfaces to `src/types/cards.ts`.
+- **Step 2 — API functions**: Added `exportAccountData()` (GET `/account/export`, 30s timeout) and `deleteAccount()` (DELETE `/account` with `{ confirm: true }`) to `src/lib/api.ts`.
+- **Step 3 — Auth store**: Added `updatePassword(newPassword)` method to Zustand auth store, delegates to `supabase.auth.updateUser()`. Returns `{ error }` consistent with signIn/signUp pattern.
+- **Step 4 — Validation**: Added `changePasswordSchema` to `src/lib/validation/auth.ts` — Zod refinement for password match with field-level error path.
+- **Step 5 — Settings page**: Complete rewrite of `Settings.tsx` with 4 card sections:
+  1. **Account Info** — email (read-only) + member since date from auth store user
+  2. **Change Password** — react-hook-form + zodResolver, success toast + form reset
+  3. **Data Export** — downloads GDPR JSON via `exportAccountData()` + `triggerDownload()`
+  4. **Danger Zone** — AlertDialog with email confirmation, sequential delete → signOut → navigate
+- **Step 6 — Tests**: 13 new tests (150 total): `settings-api.test.ts` (7), `settings-validation.test.ts` (4), `auth.test.ts` (+2 for updatePassword).
+
+### Architecture decisions
+- **Controlled AlertDialog for delete** — uses `open`/`onOpenChange` instead of `AlertDialogTrigger`/`AlertDialogAction` so dialog stays open during async delete + shows loading state and errors.
+- **Sequential deletion flow** — `await deleteAccount()` → `await signOut()` → `navigate("/")` prevents auth listener race conditions.
+- **Reused `triggerDownload()`** — same utility from Export page for JSON data download.
+- **Auth-aware marketing header** — single "Go to App" button replaces login/signup when session exists.
+
+### Quality gates
+- TypeScript strict: 0 errors
+- ESLint: 0 warnings
+- Vitest: 150/150 tests pass (13 new)
+- Vite build: succeeds (Settings chunk: 7.35 KB)
+
+### Next session tasks
+- **Phase 5 polish**: 404 page, dark mode, data export from Settings

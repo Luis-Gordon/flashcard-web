@@ -8,6 +8,7 @@ const mockOnAuthStateChange = vi.fn();
 const mockSignInWithPassword = vi.fn();
 const mockSignUp = vi.fn();
 const mockSignOut = vi.fn();
+const mockUpdateUser = vi.fn();
 
 vi.mock("@/lib/supabase", () => ({
   supabase: {
@@ -17,6 +18,7 @@ vi.mock("@/lib/supabase", () => ({
       signInWithPassword: (params: unknown) => mockSignInWithPassword(params),
       signUp: (params: unknown) => mockSignUp(params),
       signOut: () => mockSignOut(),
+      updateUser: (params: unknown) => mockUpdateUser(params),
     },
   },
 }));
@@ -203,5 +205,32 @@ describe("useAuthStore", () => {
     const loggedOutState = useAuthStore.getState();
     expect(loggedOutState.session).toBeNull();
     expect(loggedOutState.user).toBeNull();
+  });
+
+  it("handles updatePassword success", async () => {
+    mockUpdateUser.mockResolvedValue({ error: null });
+
+    const { error } = await useAuthStore
+      .getState()
+      .updatePassword("newSecurePassword123");
+
+    expect(error).toBeNull();
+    expect(mockUpdateUser).toHaveBeenCalledWith({
+      password: "newSecurePassword123",
+    });
+  });
+
+  it("handles updatePassword error", async () => {
+    const authError = {
+      message: "Password too weak",
+      status: 422,
+    } as AuthError;
+    mockUpdateUser.mockResolvedValue({ error: authError });
+
+    const { error } = await useAuthStore
+      .getState()
+      .updatePassword("weak");
+
+    expect(error).toEqual(authError);
   });
 });

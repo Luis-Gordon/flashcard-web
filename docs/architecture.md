@@ -53,7 +53,7 @@ src/
 │       ├── Library.tsx         # Paginated grid/list, filters, undo delete, export selected
 │       ├── Export.tsx          # Format selector, options, preview, download
 │       ├── Billing.tsx         # Plan display, usage, Stripe Checkout + Portal
-│       └── Settings.tsx        # Placeholder (Phase 5)
+│       └── Settings.tsx        # Account info, password, data export, delete
 ├── components/
 │   ├── AuthGuard.tsx           # Route guard: redirect if unauthenticated
 │   ├── MarketingLayout.tsx     # Header + footer for public pages
@@ -220,5 +220,13 @@ docs/
 - **Components**: `Billing.tsx` (route page), `UpgradeModal.tsx` (dialog), `findTierByApiName()` (pricing helper)
 - **Types**: `BillingTier`, `SubscriptionStatus` (union types), `CheckoutResponse`, `PortalResponse`
 
+### Account Settings (Phase 5a)
+- **Settings page** (`Settings.tsx`): 4-section layout (Account Info, Change Password, Data Export, Danger Zone)
+- **Change password**: `react-hook-form` + `zodResolver(changePasswordSchema)` → `useAuthStore.updatePassword()` → `supabase.auth.updateUser()`
+- **Data export**: `exportAccountData()` (GET `/account/export`) → `triggerDownload()` as JSON
+- **Account deletion**: Controlled `AlertDialog` with email confirmation → `deleteAccount()` (DELETE `/account` with `{ confirm: true }`) → sequential `signOut()` → `navigate("/")`
+- **Auth-aware marketing header**: `MarketingLayout.tsx` shows "Go to App" when authenticated, login/signup buttons when not
+- **Types**: `AccountExportResponse`, `DeleteAccountResponse`
+
 ## Not Yet Implemented
-- Account settings + data export (Phase 5)
+- 404 page, dark mode (Phase 5 polish)

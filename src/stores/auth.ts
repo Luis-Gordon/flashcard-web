@@ -16,6 +16,9 @@ interface AuthState {
     password: string,
   ) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
+  updatePassword: (
+    newPassword: string,
+  ) => Promise<{ error: AuthError | null }>;
 }
 
 let authUnsubscribe: (() => void) | null = null;
@@ -58,5 +61,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signOut: async () => {
     await supabase.auth.signOut();
+  },
+
+  updatePassword: async (newPassword) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    return { error };
   },
 }));

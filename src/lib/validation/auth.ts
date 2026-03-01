@@ -21,3 +21,15 @@ export const signupSchema = z
   });
 
 export type SignupValues = z.infer<typeof signupSchema>;
+
+export const changePasswordSchema = z
+  .object({
+    newPassword: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
