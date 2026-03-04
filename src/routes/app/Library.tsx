@@ -30,6 +30,8 @@ import {
   ChevronRight,
   Trash2,
   Download,
+  AlertTriangle,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -46,6 +48,7 @@ export default function Library() {
     libraryCards,
     libraryPagination,
     isLoadingLibrary,
+    libraryError,
     fetchLibrary,
     updateLibraryCard,
     bulkDeleteLibraryCards,
@@ -218,6 +221,28 @@ export default function Library() {
     );
   }
 
+  // --- Error state ---
+  if (!isLoadingLibrary && libraryError) {
+    return (
+      <div className="mx-auto max-w-6xl">
+        <h1 className="mb-6 text-2xl font-bold tracking-tight">Card Library</h1>
+        <div className="flex flex-col items-center gap-4 py-20 text-center">
+          <div className="rounded-2xl bg-destructive/10 p-4">
+            <AlertTriangle className="h-10 w-10 text-destructive" />
+          </div>
+          <div className="space-y-1.5">
+            <h2 className="text-lg font-semibold">Unable to load cards</h2>
+            <p className="max-w-sm text-sm text-muted-foreground">{libraryError}</p>
+          </div>
+          <Button variant="outline" className="mt-2" onClick={() => fetchLibrary(currentFilters)}>
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Try again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // --- Empty state (no cards at all) ---
   if (!isLoadingLibrary && libraryCards.length === 0 && !hasActiveFilters) {
     return (
@@ -357,6 +382,7 @@ export default function Library() {
               if (allSelected) deselectAllLibraryCards();
               else selectAllLibraryCards();
             }}
+            aria-label="Select all cards"
           />
           <span className="text-sm text-muted-foreground">
             {allSelected ? "Deselect all" : "Select all"}{" "}

@@ -671,3 +671,32 @@
 
 ### Next session tasks
 - Production deployment prep
+
+## Session 20 — 2026-03-04 — Codebase Audit Fixes
+
+### What was done
+Implemented 5 findings from the full codebase audit report (high and medium priority):
+
+1. **CSP hardening**: Removed `'unsafe-eval'` from `script-src` in `public/_headers`. Only `'wasm-unsafe-eval'` (needed for sql.js WASM) remains — closes an unnecessary XSS vector.
+2. **Cache-Control headers**: Added per-path caching directives — `immutable` for hashed `/assets/*` and `sql-wasm.wasm`, `no-cache` for HTML files.
+3. **ErrorBoundary**: New `src/components/ErrorBoundary.tsx` class component wraps all Routes in `App.tsx`. Catches unhandled render errors and shows a recovery UI (reload + go home) instead of a white screen.
+4. **Library fetch error surfacing**: Added `libraryError` state to the cards store. `fetchLibrary` now captures the error message on failure instead of silently swallowing it. Library page renders a distinct error state with "Try again" button.
+5. **Checkbox accessibility**: Added `aria-label` to all selection checkboxes (select-all in Library and CardReview, per-card in LibraryCardItem and CardReview).
+
+### Files changed
+- `public/_headers` — CSP fix + Cache-Control headers
+- `src/components/ErrorBoundary.tsx` — new file
+- `src/App.tsx` — ErrorBoundary wrapper
+- `src/stores/cards.ts` — `libraryError` state + error capture in `fetchLibrary`
+- `src/lib/hooks/useCards.ts` — expose `libraryError` in `useLibrary` hook
+- `src/routes/app/Library.tsx` — error state UI + aria-label
+- `src/components/cards/LibraryCardItem.tsx` — aria-label
+- `src/components/cards/CardReview.tsx` — aria-labels (×2)
+
+### Quality gates
+- TypeScript strict: 0 errors
+- ESLint: 0 warnings
+- Vitest: 163/163 tests pass
+
+### Next session tasks
+- Production deployment prep

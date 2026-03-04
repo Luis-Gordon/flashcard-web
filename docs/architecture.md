@@ -57,6 +57,7 @@ src/
 │       └── Settings.tsx        # Account info, appearance, password, data export, delete
 ├── components/
 │   ├── AuthGuard.tsx           # Route guard: redirect if unauthenticated
+│   ├── ErrorBoundary.tsx       # Root error boundary: crash recovery UI
 │   ├── MarketingLayout.tsx     # Header + footer for public pages
 │   ├── ui/                     # shadcn/ui components (25 installed)
 │   ├── cards/
@@ -191,6 +192,12 @@ docs/
 - `AppLayout` and `AuthGuard` remain eagerly loaded (needed immediately)
 - Vite automatically creates separate chunks per lazy route
 - Index chunk: ~581 KB; route chunks: 0.4–88 KB each
+
+### Error Boundary
+- Root `<ErrorBoundary>` wraps `<BrowserRouter>` in `App.tsx`
+- Class component (React requires `getDerivedStateFromError` lifecycle)
+- Catches unhandled render errors and shows recovery UI (reload / go home)
+- Logs to `console.error` for debugging (no external error service yet)
 
 ### Routing
 - Library mode: `<BrowserRouter>` → `<Routes>` → `<Route>`

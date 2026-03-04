@@ -31,6 +31,7 @@ export function useLibrary() {
     libraryCards: s.libraryCards,
     libraryPagination: s.libraryPagination,
     isLoadingLibrary: s.isLoadingLibrary,
+    libraryError: s.libraryError,
     fetchLibrary: s.fetchLibrary,
     deleteLibraryCard: s.deleteLibraryCard,
     updateLibraryCard: s.updateLibraryCard,

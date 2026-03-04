@@ -1,6 +1,7 @@
 import { lazy, Suspense, useSyncExternalStore } from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { Toaster } from "@/components/ui/sonner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthGuard } from "@/components/AuthGuard";
 import AppLayout from "@/routes/app/AppLayout";
 
@@ -46,28 +47,30 @@ export function App() {
   const resolvedTheme = useResolvedTheme();
 
   return (
-    <BrowserRouter>
-      <Suspense fallback={<RouteSpinner />}>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/app" element={<AuthGuard />}>
-            <Route element={<AppLayout />}>
-              <Route index element={<Generate />} />
-              <Route path="library" element={<Library />} />
-              <Route path="export" element={<Export />} />
-              <Route path="billing" element={<Billing />} />
-              <Route path="settings" element={<Settings />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Suspense fallback={<RouteSpinner />}>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/app" element={<AuthGuard />}>
+              <Route element={<AppLayout />}>
+                <Route index element={<Generate />} />
+                <Route path="library" element={<Library />} />
+                <Route path="export" element={<Export />} />
+                <Route path="billing" element={<Billing />} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
             </Route>
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
-      <Toaster theme={resolvedTheme} />
-    </BrowserRouter>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+        <Toaster theme={resolvedTheme} />
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }

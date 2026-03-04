@@ -14,8 +14,11 @@ React SPA for card generation, library management, .apkg export, and billing. Vi
 - **Export page**: Format selector (2×2 radio cards), dynamic options panel, collapsible preview, recent deck names, APKG builder (sql.js WASM + JSZip), code-split APKG chunk (~143 KB).
 - **Library page**: Paginated grid/list view, inline editing, bulk delete, domain badges, 3 empty states, filter toolbar (domain/search/tag/date/sort), undo-able single delete, export selected, card count badge in sidebar nav.
 - **Generate page**: Export button in CardReview summary bar → transfers selected cards to Export page.
+- **ErrorBoundary**: Root error boundary catches unhandled render errors → recovery UI (reload / go home) instead of white screen.
+- **Library error state**: `fetchLibrary` failures now surface an error message with "Try again" button instead of silently showing empty state.
+- **CSP hardened**: `'unsafe-eval'` removed from `script-src`; only `'wasm-unsafe-eval'` remains for sql.js.
+- **Cache-Control**: Hashed assets immutable, HTML no-cache, WASM immutable.
 - **Staging deployment**: `npm run deploy:staging` available. `wrangler.jsonc` has staging env. CSP allows both staging + production backend.
-- **Backend prerequisite**: Deploy `product_source` fix to `CheckoutRequestSchema` before billing can be tested end-to-end.
 - **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (163/163 tests), build succeeds.
 
 ## Next Session Tasks

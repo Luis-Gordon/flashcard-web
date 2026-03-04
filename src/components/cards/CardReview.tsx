@@ -56,6 +56,7 @@ const CardItem = memo(function CardItem({
           checked={isSelected}
           onCheckedChange={() => onToggleSelect(card.id)}
           className="mt-0.5"
+          aria-label="Select card"
         />
         <div className="flex-1 space-y-2">
           {/* Front */}
@@ -277,6 +278,7 @@ export function CardReview({
               if (allSelected) deselectAllCards();
               else selectAllCards();
             }}
+            aria-label="Select all cards"
           />
           <span className="text-sm text-muted-foreground">
             {allSelected ? "Deselect all" : "Select all"} ({selectedCardIds.size}/{cards.length})

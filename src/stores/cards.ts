@@ -30,6 +30,7 @@ interface CardState {
   libraryCards: LibraryCard[];
   libraryPagination: { page: number; limit: number; total: number; total_pages: number };
   isLoadingLibrary: boolean;
+  libraryError: string | null;
 
   // Library selection
   librarySelectedIds: Set<string>;
@@ -76,6 +77,7 @@ export const useCardStore = create<CardState>((set, get) => ({
   libraryCards: [],
   libraryPagination: { page: 1, limit: 20, total: 0, total_pages: 0 },
   isLoadingLibrary: false,
+  libraryError: null,
   librarySelectedIds: new Set<string>(),
   exportCards: [],
 
@@ -163,7 +165,7 @@ export const useCardStore = create<CardState>((set, get) => ({
   deselectAllCards: () => set({ selectedCardIds: new Set() }),
 
   fetchLibrary: async (filters) => {
-    set({ isLoadingLibrary: true, librarySelectedIds: new Set() });
+    set({ isLoadingLibrary: true, libraryError: null, librarySelectedIds: new Set() });
     try {
       const response = await api.getCards(filters);
       set({
@@ -171,8 +173,12 @@ export const useCardStore = create<CardState>((set, get) => ({
         libraryPagination: response.pagination,
         isLoadingLibrary: false,
       });
-    } catch {
-      set({ isLoadingLibrary: false });
+    } catch (error) {
+      const message =
+        error instanceof api.ApiError
+          ? error.message
+          : "Failed to load cards. Please try again.";
+      set({ isLoadingLibrary: false, libraryError: message });
     }
   },
 

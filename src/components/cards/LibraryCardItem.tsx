@@ -64,6 +64,7 @@ export const LibraryCardItem = memo(function LibraryCardItem({
             checked={isSelected}
             onCheckedChange={() => onToggleSelect(card.id)}
             className="shrink-0"
+            aria-label="Select card"
           />
           <Badge
             variant="secondary"
