@@ -62,7 +62,7 @@ src/
 │   ├── ui/                     # shadcn/ui components (25 installed)
 │   ├── cards/
 │   │   ├── SanitizedHTML.tsx   # Shared DOMPurify HTML renderer (fc-* safe)
-│   │   ├── GenerateForm.tsx    # Domain/style/difficulty form + content textarea
+│   │   ├── GenerateForm.tsx    # Domain/style/difficulty form + content textarea + focus highlighting + guidance
 │   │   ├── CardReview.tsx      # Card list with select/edit/delete + quality filter + export
 │   │   ├── CardEditor.tsx      # Inline card editor (front/back/tags/notes)
 │   │   ├── LibraryCardItem.tsx # Library card: grid/list, domain badge, expand, select
@@ -129,8 +129,8 @@ docs/
 - **429 retry**: Auto-retries rate-limited responses up to 2 times. Respects `retry_after` from response (capped at 60s, defaults to 1s). Abort-aware wait integrates with overall timeout.
 
 ### Card Generation Flow
-1. User fills `GenerateForm` → submits to `useCardStore.generateCards()`
-2. Store calls `api.generateCards()` → POST `/cards/generate`
+1. User fills `GenerateForm` → optionally highlights focus terms + adds guidance → submits to `useCardStore.generateCards()`
+2. Store calls `api.generateCards()` → POST `/cards/generate` (includes `user_guidance` if provided)
 3. Response cards get `crypto.randomUUID()` IDs (backend doesn't return persisted IDs)
 4. All cards auto-selected in `selectedCardIds` Set
 5. `Generate.tsx` auto-switches from form to `CardReview` panel

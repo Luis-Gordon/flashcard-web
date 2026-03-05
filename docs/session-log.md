@@ -700,3 +700,22 @@ Implemented 5 findings from the full codebase audit report (high and medium prio
 
 ### Next session tasks
 - Production deployment prep
+
+## Session 21 — 2026-03-05 — Generate Form: User Guidance + Content Focus Highlighting
+
+### What was done
+- **`GenerateRequest` type**: Added `user_guidance?: string` field to `src/types/cards.ts`.
+- **Store threading**: Added `userGuidance?: string` parameter to `generateCards` action in `stores/cards.ts`, passed through as `user_guidance` in the API request body.
+- **GenerateForm UI**: Added two-part "Focus" section (visible when content >= 10 chars):
+  1. **Content highlight panel**: Read-only mirror div of pasted content. Text selection triggers a floating "Add focus" button (positioned via `getBoundingClientRect`). Clicking adds the selection as a Badge pill (max 5 highlights, 80 chars each). Pills have X remove buttons and N/5 counter. Floating button dismissed on scroll (div + window) and selection collapse.
+  2. **Free-text guidance textarea**: Independent `<Textarea>` with 500 char max, character counter that turns `text-destructive` at >480 chars.
+- **Submit concatenation**: Highlights serialized as `"Focus on: term1; term2."`, joined with free text, capped at 500 chars, sent as `userGuidance` (omitted entirely if empty).
+
+### Architecture decisions
+- **Local state, not react-hook-form**: Highlights and freeText are managed via `useState` since they're not form fields — they're derived into `userGuidance` only at submit time. Keeps the Zod schema unchanged.
+- **Floating button via fixed positioning**: Uses `getBoundingClientRect()` for pixel-accurate placement near the selection. Scroll listeners on both the mirror div and window clear the button position to prevent drift.
+
+### Quality gates
+- TypeScript strict: 0 errors
+- ESLint: 0 warnings
+- Vitest: 163/163 tests pass (no test changes — UI feature, existing tests unaffected)

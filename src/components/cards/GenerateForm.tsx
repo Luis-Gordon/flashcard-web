@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "react-router";
@@ -12,6 +12,7 @@ import { useCardActions } from "@/lib/hooks/useCards";
 import { ApiError } from "@/lib/api";
 import type { CardDomain } from "@/types/cards";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
@@ -36,6 +37,7 @@ import {
   Palette,
   Wrench,
   Brain,
+  X,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -67,6 +69,10 @@ const LANGUAGE_OPTIONS = [
   { value: "ja", label: "Japanese" },
   { value: "default", label: "Other (generic)" },
 ] as const;
+
+const MAX_HIGHLIGHTS = 5;
+const MAX_HIGHLIGHT_LENGTH = 80;
+const MAX_GUIDANCE_LENGTH = 500;
 
 // ---------------------------------------------------------------------------
 // Component
@@ -101,6 +107,14 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
 
   const selectedDomain = watch("domain");
   const maxCards = watch("maxCards");
+  const contentValue = watch("content");
+
+  // Focus state (not part of react-hook-form)
+  const [highlights, setHighlights] = useState<string[]>([]);
+  const [freeText, setFreeText] = useState("");
+  const [focusButtonPos, setFocusButtonPos] = useState<{ top: number; left: number } | null>(null);
+  const [pendingSelection, setPendingSelection] = useState("");
+  const highlightDivRef = useRef<HTMLDivElement>(null);
 
   // Extension handoff: read URL params on mount
   useEffect(() => {
@@ -121,7 +135,77 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
 
   }, []);
 
+  // Clear floating button when selection collapses
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+        setFocusButtonPos(null);
+        setPendingSelection("");
+      }
+    };
+    document.addEventListener("selectionchange", handleSelectionChange);
+    return () => document.removeEventListener("selectionchange", handleSelectionChange);
+  }, []);
+
+  // Clear floating button on scroll (prevents drift)
+  useEffect(() => {
+    const div = highlightDivRef.current;
+    const clearButton = () => setFocusButtonPos(null);
+    if (div) {
+      div.addEventListener("scroll", clearButton);
+    }
+    window.addEventListener("scroll", clearButton, true);
+    return () => {
+      if (div) {
+        div.removeEventListener("scroll", clearButton);
+      }
+      window.removeEventListener("scroll", clearButton, true);
+    };
+  }, []);
+
+  const handleContentMouseUp = useCallback(() => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+
+    const text = sel.toString().trim();
+    if (!text) return;
+
+    // Ensure selection is within the highlight div
+    const div = highlightDivRef.current;
+    if (!div) return;
+    if (!div.contains(sel.anchorNode) || !div.contains(sel.focusNode)) return;
+
+    const range = sel.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+
+    setPendingSelection(text.slice(0, MAX_HIGHLIGHT_LENGTH));
+    setFocusButtonPos({
+      top: rect.top - 36,
+      left: rect.left + rect.width / 2 - 45,
+    });
+  }, []);
+
+  const addHighlight = useCallback(() => {
+    if (!pendingSelection || highlights.length >= MAX_HIGHLIGHTS) return;
+    // Avoid duplicates
+    if (!highlights.includes(pendingSelection)) {
+      setHighlights((prev) => [...prev, pendingSelection]);
+    }
+    setPendingSelection("");
+    setFocusButtonPos(null);
+    window.getSelection()?.removeAllRanges();
+  }, [pendingSelection, highlights]);
+
+  const removeHighlight = useCallback((index: number) => {
+    setHighlights((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
   const onSubmit = async (values: GenerateFormValues) => {
+    // Derive userGuidance from highlights + freeText
+    const serialized = highlights.length ? `Focus on: ${highlights.join("; ")}.` : "";
+    const userGuidance = [serialized, freeText.trim()].filter(Boolean).join(" ").slice(0, MAX_GUIDANCE_LENGTH) || undefined;
+
     try {
       await generateCards({
         content: values.content,
@@ -130,6 +214,7 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
         difficulty: values.difficulty,
         maxCards: values.maxCards,
         hookKey: values.hookKey,
+        userGuidance,
       });
     } catch (error) {
       if (error instanceof ApiError) {
@@ -190,6 +275,83 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
           <p className="text-sm text-destructive">{errors.content.message}</p>
         )}
       </div>
+
+      {/* Focus section — highlight + guidance */}
+      {contentValue.length >= 10 && (
+        <div className="space-y-3">
+          <Label>
+            Focus
+            <span className="ml-1 text-xs font-normal text-muted-foreground">
+              Select text below to highlight key terms, or add guidance
+            </span>
+          </Label>
+
+          {/* Read-only content mirror for text selection */}
+          <div
+            ref={highlightDivRef}
+            className="max-h-40 overflow-y-auto rounded-md border bg-muted/40 p-2 text-sm whitespace-pre-wrap select-text"
+            onMouseUp={handleContentMouseUp}
+          >
+            {contentValue}
+          </div>
+
+          {/* Floating "Add focus" button */}
+          {focusButtonPos && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="fixed z-50 shadow-md"
+              style={{ top: focusButtonPos.top, left: focusButtonPos.left }}
+              disabled={highlights.length >= MAX_HIGHLIGHTS}
+              onClick={addHighlight}
+            >
+              Add focus
+            </Button>
+          )}
+
+          {/* Highlight pills */}
+          {highlights.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {highlights.map((h, i) => (
+                <Badge key={i} variant="secondary" className="gap-1 pr-1">
+                  <span className="max-w-[10rem] truncate">{h}</span>
+                  <button
+                    type="button"
+                    className="ml-0.5 rounded-sm p-0.5 hover:bg-muted"
+                    onClick={() => removeHighlight(i)}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+              <span className="text-xs text-muted-foreground">
+                {highlights.length}/{MAX_HIGHLIGHTS}
+              </span>
+            </div>
+          )}
+
+          {/* Free-text guidance */}
+          <div className="space-y-1.5">
+            <Label htmlFor="guidance">
+              Guidance
+              <Badge variant="secondary" className="ml-1.5 text-[10px]">optional</Badge>
+            </Label>
+            <Textarea
+              id="guidance"
+              rows={2}
+              className="resize-none"
+              maxLength={MAX_GUIDANCE_LENGTH}
+              placeholder="Optional: describe what to focus on (e.g. 'emphasize drug mechanisms', 'avoid historical context')"
+              value={freeText}
+              onChange={(e) => setFreeText(e.target.value)}
+            />
+            <p className={`text-right text-xs ${freeText.length > 480 ? "text-destructive" : "text-muted-foreground"}`}>
+              {freeText.length}/{MAX_GUIDANCE_LENGTH}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Domain + Language row */}
       <div className="grid gap-4 sm:grid-cols-2">

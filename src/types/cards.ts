@@ -104,6 +104,7 @@ export interface GenerateRequest {
     difficulty: Difficulty;
   };
   hook_key?: string;
+  user_guidance?: string;
 }
 
 /** Response from POST /cards/generate */
