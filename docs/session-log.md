@@ -752,3 +752,21 @@ Implemented 5 findings from the full codebase audit report (high and medium prio
 - TypeScript strict: 0 errors
 - ESLint: 0 warnings
 - Vitest: 163/163 tests pass (no test changes)
+
+## Session 23 — 2026-03-05 — Fix 3 Bugs from Language/Highlight Implementation
+
+### What was done
+Fixed three bugs introduced in Session 22:
+
+1. **"Validation failed" on generate**: Removed `sourceLanguage`/`outputLanguage` from `generateFormSchema` Zod schema. These fields are local React state (not registered with react-hook-form), so zodResolver validation failed on `undefined` values due to Zod 4's `.optional().or(z.literal(""))` union semantics. Backend validates non-empty values server-side.
+2. **Outdated lang domain description**: Changed from "Japanese-English vocabulary & grammar" to "Vocabulary, grammar & translations" to reflect multi-language support (6 languages).
+3. **Mobile highlight not working**: Added `touchend` event listener on the highlight div as a fallback for unreliable `selectionchange` on some mobile browsers. Extracted shared `showButtonForSelection` helper used by both the debounced `selectionchange` handler and the `touchend` handler (50ms delay to let browser finalize selection).
+
+### Files modified (2)
+- `src/lib/validation/cards.ts` — removed `sourceLanguage`/`outputLanguage` from schema
+- `src/components/cards/GenerateForm.tsx` — updated lang description, added `touchend` fallback
+
+### Quality gates
+- TypeScript strict: 0 errors
+- ESLint: 0 warnings
+- Vitest: 163/163 tests pass

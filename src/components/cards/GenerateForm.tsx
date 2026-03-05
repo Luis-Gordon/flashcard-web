@@ -54,7 +54,7 @@ interface DomainOption {
 }
 
 const DOMAIN_OPTIONS: DomainOption[] = [
-  { value: "lang", label: "Language", description: "Japanese-English vocabulary & grammar", icon: Languages },
+  { value: "lang", label: "Language", description: "Vocabulary, grammar & translations", icon: Languages },
   { value: "general", label: "General Knowledge", description: "Academic facts, definitions, concepts", icon: BookOpen },
   { value: "med", label: "Medical", description: "Pharmacology, pathology, anatomy", icon: Stethoscope },
   { value: "stem-m", label: "Mathematics", description: "Formulas, theorems, proofs", icon: Calculator },
@@ -149,6 +149,23 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
   useEffect(() => {
     let debounceId: number = 0;
 
+    const showButtonForSelection = () => {
+      const sel = window.getSelection();
+      const div = highlightDivRef.current;
+      if (!sel || sel.isCollapsed || !sel.toString().trim() || !div || !div.contains(sel.anchorNode)) {
+        return;
+      }
+      const text = sel.toString().trim();
+      if (!text) return;
+      const range = sel.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      setPendingSelection(text.slice(0, MAX_HIGHLIGHT_LENGTH));
+      setFocusButtonPos({
+        top: rect.top - 36,
+        left: rect.left + rect.width / 2 - 45,
+      });
+    };
+
     const handleSelectionChange = () => {
       const sel = window.getSelection();
       const div = highlightDivRef.current;
@@ -163,23 +180,21 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
 
       // Debounce show (300ms) — prevents flash during mobile drag
       clearTimeout(debounceId);
-      debounceId = window.setTimeout(() => {
-        const text = sel.toString().trim();
-        if (!text) return;
-        const range = sel.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        setPendingSelection(text.slice(0, MAX_HIGHLIGHT_LENGTH));
-        setFocusButtonPos({
-          top: rect.top - 36,
-          left: rect.left + rect.width / 2 - 45,
-        });
-      }, 300);
+      debounceId = window.setTimeout(showButtonForSelection, 300);
     };
 
+    const handleTouchEnd = () => {
+      // Short delay lets the browser finalize the selection after touch
+      window.setTimeout(showButtonForSelection, 50);
+    };
+
+    const div = highlightDivRef.current;
     document.addEventListener("selectionchange", handleSelectionChange);
+    div?.addEventListener("touchend", handleTouchEnd);
     return () => {
       clearTimeout(debounceId);
       document.removeEventListener("selectionchange", handleSelectionChange);
+      div?.removeEventListener("touchend", handleTouchEnd);
     };
   }, []);
 
