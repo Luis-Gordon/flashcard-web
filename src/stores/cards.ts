@@ -47,6 +47,8 @@ interface CardState {
     maxCards: number;
     hookKey?: string;
     userGuidance?: string;
+    sourceLanguage?: string;
+    outputLanguage?: string;
   }) => Promise<void>;
   clearPendingCards: () => void;
   removePendingCard: (id: string) => void;
@@ -82,7 +84,7 @@ export const useCardStore = create<CardState>((set, get) => ({
   librarySelectedIds: new Set<string>(),
   exportCards: [],
 
-  generateCards: async ({ content, domain, cardStyle, difficulty, maxCards, hookKey, userGuidance }) => {
+  generateCards: async ({ content, domain, cardStyle, difficulty, maxCards, hookKey, userGuidance, sourceLanguage, outputLanguage }) => {
     set({ isGenerating: true, generateError: null });
 
     try {
@@ -97,6 +99,8 @@ export const useCardStore = create<CardState>((set, get) => ({
         },
         ...(hookKey ? { hook_key: hookKey } : {}),
         ...(userGuidance ? { user_guidance: userGuidance } : {}),
+        ...(sourceLanguage ? { source_language: sourceLanguage } : {}),
+        ...(outputLanguage ? { output_language: outputLanguage } : {}),
       });
 
       // Assign client-side IDs to cards (backend response doesn't include persisted IDs)

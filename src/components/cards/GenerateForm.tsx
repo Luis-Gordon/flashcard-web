@@ -9,8 +9,10 @@ import {
   type GenerateFormValues,
 } from "@/lib/validation/cards";
 import { useCardActions } from "@/lib/hooks/useCards";
+import { useSettingsStore } from "@/stores/settings";
 import { ApiError } from "@/lib/api";
 import type { CardDomain } from "@/types/cards";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -64,10 +66,14 @@ const DOMAIN_OPTIONS: DomainOption[] = [
   { value: "mem", label: "Memory Techniques", description: "Mnemonics, memory palaces, PAO", icon: Brain },
 ];
 
-/** hook_key mapping: "ja" → Japanese hook, all others → "default" hook */
-const LANGUAGE_OPTIONS = [
+/** hook_key mapping for lang domain sub-hooks */
+const LANG_HOOK_OPTIONS = [
   { value: "ja", label: "Japanese" },
-  { value: "default", label: "Other (generic)" },
+  { value: "zh", label: "Chinese" },
+  { value: "ko", label: "Korean" },
+  { value: "ar", label: "Arabic" },
+  { value: "ru", label: "Russian" },
+  { value: "default", label: "Other" },
 ] as const;
 
 const MAX_HIGHLIGHTS = 5;
@@ -116,6 +122,10 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
   const [pendingSelection, setPendingSelection] = useState("");
   const highlightDivRef = useRef<HTMLDivElement>(null);
 
+  // Language state (not in react-hook-form)
+  const [sourceLanguage, setSourceLanguage] = useState(() => useSettingsStore.getState().userLanguage ?? "");
+  const [outputLanguage, setOutputLanguage] = useState("");
+
   // Extension handoff: read URL params on mount
   useEffect(() => {
     const content = searchParams.get("content");
@@ -135,17 +145,42 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
 
   }, []);
 
-  // Clear floating button when selection collapses
+  // Unified selection detection (desktop + mobile)
   useEffect(() => {
+    let debounceId: number = 0;
+
     const handleSelectionChange = () => {
       const sel = window.getSelection();
-      if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+      const div = highlightDivRef.current;
+
+      // Hide immediately when selection is empty or outside highlight div
+      if (!sel || sel.isCollapsed || !sel.toString().trim() || !div || !div.contains(sel.anchorNode)) {
+        clearTimeout(debounceId);
         setFocusButtonPos(null);
         setPendingSelection("");
+        return;
       }
+
+      // Debounce show (300ms) — prevents flash during mobile drag
+      clearTimeout(debounceId);
+      debounceId = window.setTimeout(() => {
+        const text = sel.toString().trim();
+        if (!text) return;
+        const range = sel.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        setPendingSelection(text.slice(0, MAX_HIGHLIGHT_LENGTH));
+        setFocusButtonPos({
+          top: rect.top - 36,
+          left: rect.left + rect.width / 2 - 45,
+        });
+      }, 300);
     };
+
     document.addEventListener("selectionchange", handleSelectionChange);
-    return () => document.removeEventListener("selectionchange", handleSelectionChange);
+    return () => {
+      clearTimeout(debounceId);
+      document.removeEventListener("selectionchange", handleSelectionChange);
+    };
   }, []);
 
   // Clear floating button on scroll (prevents drift)
@@ -162,28 +197,6 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
       }
       window.removeEventListener("scroll", clearButton, true);
     };
-  }, []);
-
-  const handleContentMouseUp = useCallback(() => {
-    const sel = window.getSelection();
-    if (!sel || sel.isCollapsed) return;
-
-    const text = sel.toString().trim();
-    if (!text) return;
-
-    // Ensure selection is within the highlight div
-    const div = highlightDivRef.current;
-    if (!div) return;
-    if (!div.contains(sel.anchorNode) || !div.contains(sel.focusNode)) return;
-
-    const range = sel.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-
-    setPendingSelection(text.slice(0, MAX_HIGHLIGHT_LENGTH));
-    setFocusButtonPos({
-      top: rect.top - 36,
-      left: rect.left + rect.width / 2 - 45,
-    });
   }, []);
 
   const addHighlight = useCallback(() => {
@@ -206,6 +219,10 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
     const serialized = highlights.length ? `Focus on: ${highlights.join("; ")}.` : "";
     const userGuidance = [serialized, freeText.trim()].filter(Boolean).join(" ").slice(0, MAX_GUIDANCE_LENGTH) || undefined;
 
+    // Language fields: pass only the relevant one for the current domain
+    const srcLang = values.domain === "lang" ? sourceLanguage.trim() || undefined : undefined;
+    const outLang = values.domain !== "lang" ? outputLanguage.trim() || undefined : undefined;
+
     try {
       await generateCards({
         content: values.content,
@@ -215,6 +232,8 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
         maxCards: values.maxCards,
         hookKey: values.hookKey,
         userGuidance,
+        sourceLanguage: srcLang,
+        outputLanguage: outLang,
       });
     } catch (error) {
       if (error instanceof ApiError) {
@@ -290,7 +309,6 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
           <div
             ref={highlightDivRef}
             className="max-h-40 overflow-y-auto rounded-md border bg-muted/40 p-2 text-sm whitespace-pre-wrap select-text"
-            onMouseUp={handleContentMouseUp}
           >
             {contentValue}
           </div>
@@ -395,7 +413,7 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
           )}
         </div>
 
-        {/* Language — only visible for lang domain */}
+        {/* hookKey selector — only for lang domain */}
         {selectedDomain === "lang" && (
           <div className="space-y-2">
             <Label>Language</Label>
@@ -411,7 +429,7 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
                     <SelectValue placeholder="Select language" />
                   </SelectTrigger>
                   <SelectContent>
-                    {LANGUAGE_OPTIONS.map(({ value, label }) => (
+                    {LANG_HOOK_OPTIONS.map(({ value, label }) => (
                       <SelectItem key={value} value={value}>
                         {label}
                       </SelectItem>
@@ -420,6 +438,38 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
                 </Select>
               )}
             />
+          </div>
+        )}
+
+        {/* Source language — for lang domain */}
+        {selectedDomain === "lang" && (
+          <div className="space-y-2">
+            <Label htmlFor="source-language">Your language</Label>
+            <Input
+              id="source-language"
+              placeholder="e.g. en, es, fr"
+              value={sourceLanguage}
+              onChange={(e) => setSourceLanguage(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Language for translations and explanations on produced cards.
+            </p>
+          </div>
+        )}
+
+        {/* Output language — for non-lang domains */}
+        {selectedDomain && selectedDomain !== "lang" && (
+          <div className="space-y-2">
+            <Label htmlFor="output-language">Output language</Label>
+            <Input
+              id="output-language"
+              placeholder="e.g. en, fr, de"
+              value={outputLanguage}
+              onChange={(e) => setOutputLanguage(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Leave blank to match your source content.
+            </p>
           </div>
         )}
       </div>

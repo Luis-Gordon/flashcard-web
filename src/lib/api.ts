@@ -12,6 +12,7 @@ import type {
   PortalResponse,
   AccountExportResponse,
   DeleteAccountResponse,
+  UpdateLanguageResponse,
 } from "@/types/cards";
 
 export type ErrorCode =
@@ -305,5 +306,12 @@ export function deleteAccount(): Promise<DeleteAccountResponse> {
   return apiRequest<DeleteAccountResponse>("/account", {
     method: "DELETE",
     body: { confirm: true },
+  });
+}
+
+export function updateUserLanguage(language: string | null): Promise<UpdateLanguageResponse> {
+  return apiRequest<UpdateLanguageResponse>("/account/language", {
+    method: "PATCH",
+    body: { user_language: language },
   });
 }

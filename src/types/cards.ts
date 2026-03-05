@@ -105,6 +105,8 @@ export interface GenerateRequest {
   };
   hook_key?: string;
   user_guidance?: string;
+  source_language?: string;
+  output_language?: string;
 }
 
 /** Response from POST /cards/generate */
@@ -200,4 +202,10 @@ export interface AccountExportResponse {
 export interface DeleteAccountResponse {
   request_id: string;
   deleted: boolean;
+}
+
+/** Response from PATCH /account/language */
+export interface UpdateLanguageResponse {
+  request_id: string;
+  user_language: string | null;
 }

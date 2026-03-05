@@ -23,6 +23,8 @@ export const generateFormSchema = z.object({
   cardStyle: z.enum(["basic", "cloze", "mixed"]),
   difficulty: z.enum(["beginner", "intermediate", "advanced"]),
   maxCards: z.number().int().min(1).max(50),
+  sourceLanguage: z.string().regex(/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/, "Invalid language code").optional().or(z.literal("")),
+  outputLanguage: z.string().regex(/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/, "Invalid language code").optional().or(z.literal("")),
 });
 
 export type GenerateFormValues = z.infer<typeof generateFormSchema>;

@@ -719,3 +719,36 @@ Implemented 5 findings from the full codebase audit report (high and medium prio
 - TypeScript strict: 0 errors
 - ESLint: 0 warnings
 - Vitest: 163/163 tests pass (no test changes — UI feature, existing tests unaffected)
+
+## Session 22 — 2026-03-05 — User Language Preference + Generate Form Language Selectors + Mobile Highlight Fix
+
+### What was done
+- **API layer**: Added `UpdateLanguageResponse` type, `source_language`/`output_language` fields to `GenerateRequest`, `updateUserLanguage()` API function.
+- **Settings store**: Added `userLanguage` (persisted) + `setUserLanguage` action that calls API then stores server response value.
+- **Settings page**: New "Language" card between Appearance and Change Password — text input for BCP-47 code, save button with loading state, synced from store via useEffect.
+- **GenerateForm language controls**:
+  - Expanded `LANG_HOOK_OPTIONS` from 2 to 6 options (JA, ZH, KO, AR, RU, Other) matching all backend sub-hooks.
+  - Added "Your language" input (for lang domain) — initializes from settings store `userLanguage`, maps to `source_language`.
+  - Added "Output language" input (for non-lang domains) — maps to `output_language`.
+  - Language fields threaded through cards store → API request.
+- **Mobile highlight fix**: Replaced `onMouseUp` handler + basic `selectionchange` listener with unified `selectionchange` effect using 300ms debounce. Works on both desktop click and mobile long-press/drag.
+- **Form validation**: Added BCP-47 regex validation on `sourceLanguage`/`outputLanguage` in `generateFormSchema` (matches backend pattern).
+
+### Architecture decisions
+- **Server-first language save**: `setUserLanguage` awaits API response and stores the server-returned value (post-coercion), preventing client/server mismatch when null→'en' coercion occurs.
+- **Language state outside react-hook-form**: `sourceLanguage`/`outputLanguage` managed as local `useState` (same pattern as highlights/freeText) since they need conditional submit logic per domain.
+- **Debounced selectionchange**: 300ms debounce on show, immediate clear on collapse — prevents flash during mobile drag while keeping desktop responsive.
+
+### Files modified (7)
+- `src/types/cards.ts` — `UpdateLanguageResponse`, `source_language`/`output_language` on `GenerateRequest`
+- `src/lib/api.ts` — `updateUserLanguage()` function
+- `src/stores/settings.ts` — `userLanguage` state + `setUserLanguage` action
+- `src/stores/cards.ts` — `sourceLanguage`/`outputLanguage` params threaded through `generateCards`
+- `src/lib/validation/cards.ts` — BCP-47 validated `sourceLanguage`/`outputLanguage` fields
+- `src/routes/app/Settings.tsx` — Language preference card
+- `src/components/cards/GenerateForm.tsx` — 6-option lang hooks, language inputs, mobile highlight fix
+
+### Quality gates
+- TypeScript strict: 0 errors
+- ESLint: 0 warnings
+- Vitest: 163/163 tests pass (no test changes)

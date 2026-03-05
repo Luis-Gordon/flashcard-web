@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Download,
+  Languages,
   Loader2,
   Lock,
   Mail,
@@ -59,6 +60,8 @@ export default function Settings() {
   const { user, signOut, updatePassword } = useAuthStore();
   const themeMode = useSettingsStore((s) => s.themeMode);
   const setThemeMode = useSettingsStore((s) => s.setThemeMode);
+  const userLanguage = useSettingsStore((s) => s.userLanguage);
+  const setUserLanguage = useSettingsStore((s) => s.setUserLanguage);
 
   // Password form
   const {
@@ -70,6 +73,14 @@ export default function Settings() {
     resolver: zodResolver(changePasswordSchema),
     defaultValues: { newPassword: "", confirmPassword: "" },
   });
+
+  // Language preference state
+  const [langInput, setLangInput] = useState("");
+  const [isSavingLang, setIsSavingLang] = useState(false);
+
+  useEffect(() => {
+    setLangInput(userLanguage ?? "");
+  }, [userLanguage]);
 
   // Data export state
   const [isExporting, setIsExporting] = useState(false);
@@ -91,6 +102,21 @@ export default function Settings() {
     }
     toast.success("Password updated");
     reset();
+  }
+
+  async function handleSaveLanguage() {
+    setIsSavingLang(true);
+    try {
+      const trimmed = langInput.trim();
+      await setUserLanguage(trimmed || null);
+      toast.success("Language preference saved");
+    } catch (err) {
+      const message =
+        err instanceof ApiError ? err.message : "Failed to save language";
+      toast.error(message);
+    } finally {
+      setIsSavingLang(false);
+    }
   }
 
   async function handleExport() {
@@ -192,6 +218,37 @@ export default function Settings() {
               </Button>
             ))}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Language Preference */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <Languages className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base">Language</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Default language for card explanations and translations.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="user-language">Preferred language</Label>
+            <Input
+              id="user-language"
+              placeholder="e.g. en, es, fr, ja"
+              value={langInput}
+              onChange={(e) => setLangInput(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Leave blank to use English. Accepts BCP-47 codes.
+            </p>
+          </div>
+          <Button onClick={handleSaveLanguage} disabled={isSavingLang}>
+            {isSavingLang && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isSavingLang ? "Saving..." : "Save"}
+          </Button>
         </CardContent>
       </Card>
 
