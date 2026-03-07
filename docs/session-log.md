@@ -787,3 +787,25 @@ Two small fixes:
 - TypeScript strict: 0 errors
 - ESLint: 0 warnings
 - Vitest: 163/163 tests pass
+
+## Session 25 — 2026-03-07 — Fix Generation Failure + hookKey Warning
+
+### What was done
+Fixed card generation failure and React controlled/uncontrolled Select warning.
+
+1. **hookKey leak fix** (`GenerateForm.tsx`): When switching domains, `hookKey` was being set to `"ja"` as a default value, which meant `hook_key: "ja"` was sent in API requests for all domains (not just LANG). Backend rejected with "Unknown hook_key 'ja' for domain 'general'". Fixed by keeping `hookKey` as `undefined` by default and only setting it to `"ja"` in the domain `onChange` handler when switching to LANG.
+2. **Controlled/uncontrolled fix** (`GenerateForm.tsx`): Removed `?? "ja"` fallback from hookKey Select `value` prop. The value is now set correctly before the Select mounts (via domain onChange), so no transition from undefined to string occurs.
+3. **Generate timeout increase** (`api.ts`): Increased client-side generate timeout from 60s to 90s to provide buffer over the 60s Claude API timeout.
+
+### Key decisions
+- Keep `hookKey` default as `undefined` (not `"ja"`) to prevent leaking domain-specific fields to other domains
+- 90s client timeout gives 30s buffer over 60s Claude API timeout
+
+### Files modified (2)
+- `src/components/cards/GenerateForm.tsx` — hookKey default + domain onChange + Select value
+- `src/lib/api.ts` — generate timeout 60s → 90s
+
+### Quality gates
+- TypeScript strict: 0 errors
+- ESLint: 0 warnings
+- Vitest: 163/163 tests pass

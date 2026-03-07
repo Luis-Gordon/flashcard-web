@@ -398,8 +398,9 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
                 value={field.value}
                 onValueChange={(val) => {
                   field.onChange(val);
-                  // Reset hookKey when switching away from lang
-                  if (val !== "lang") setValue("hookKey", undefined);
+                  // Set hookKey to "ja" when switching to lang (before Select mounts),
+                  // clear it for non-lang domains so it's not sent in the request
+                  setValue("hookKey", val === "lang" ? "ja" : undefined);
                 }}
               >
                 <SelectTrigger className="w-full">
@@ -437,7 +438,7 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
               control={control}
               render={({ field }) => (
                 <Select
-                  value={field.value ?? "ja"}
+                  value={field.value}
                   onValueChange={field.onChange}
                 >
                   <SelectTrigger className="w-full">

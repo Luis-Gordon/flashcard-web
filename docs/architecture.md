@@ -122,7 +122,7 @@ docs/
 ### API Client
 - Auto-injects `product_source: "web_app"` in all request bodies
 - Typed `ApiError` with `status`, `code`, `requestId`, `retryAfter`
-- AbortController timeout (default 60s) — serves as overall deadline across retries
+- AbortController timeout (default 60s, generate 90s) — serves as overall deadline across retries
 - Gets auth token directly from Supabase session (no intermediate storage)
 - Supports GET requests with `params` option (URLSearchParams)
 - **401 handling**: `notifyUnauthorized()` calls registered handler (set in `main.tsx`) which toasts "Session expired" + `signOut()`. Debounced with 1s cooldown to prevent duplicate toasts from concurrent requests.

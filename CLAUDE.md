@@ -181,11 +181,13 @@ All client-side env vars must use the `VITE_` prefix to be exposed to the browse
 1. `npm run typecheck` — must pass
 2. `npm run lint:fix` — fix warnings
 3. `npm run test` — all tests pass
-4. Append to `docs/session-log.md`
-5. Update `docs/architecture.md` if structure changed
-6. Update "Current Status" above
-7. Update `README.md` if setup or commands changed
-8. **Commit and push** — work is not complete until pushed
+4. **If API request shapes changed** (new fields sent to backend): verify the backend has been deployed with matching schema changes first. The backend uses `.strict()` Zod validation — unknown fields are rejected. See root CLAUDE.md § Deployment Coordination.
+5. **Deploy with correct mode**: Use `npm run deploy:staging` (not manual `build` + `deploy`). The script handles `--mode staging` → `.env.staging`. Bare `npm run build` uses `.env.production`.
+6. Append to `docs/session-log.md`
+7. Update `docs/architecture.md` if structure changed
+8. Update "Current Status" above
+9. Update `README.md` if setup or commands changed
+10. **Commit and push** — work is not complete until pushed
 
 ## Non-Goals (This Phase)
 - SSR or SSG beyond marketing pre-render (this is a client-side SPA)

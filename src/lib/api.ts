@@ -220,7 +220,7 @@ export function generateCards(request: GenerateRequest): Promise<GenerateRespons
   return apiRequest<GenerateResponse>("/cards/generate", {
     method: "POST",
     body: request as unknown as Record<string, unknown>,
-    timeout: 60_000,
+    timeout: 90_000,
   });
 }
 
