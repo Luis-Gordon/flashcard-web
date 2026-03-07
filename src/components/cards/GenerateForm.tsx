@@ -270,8 +270,8 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
           default:
             toast.error("Generation failed", {
               description: error.requestId
-                ? `Something went wrong. Reference: ${error.requestId}`
-                : "Something went wrong. Please try again.",
+                ? `${error.message} (Reference: ${error.requestId})`
+                : error.message || "Something went wrong. Please try again.",
             });
             return;
         }

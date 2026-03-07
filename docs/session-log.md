@@ -770,3 +770,20 @@ Fixed three bugs introduced in Session 22:
 - TypeScript strict: 0 errors
 - ESLint: 0 warnings
 - Vitest: 163/163 tests pass
+
+## Session 24 — 2026-03-07 — CSP Update + Error Toast Improvement
+
+### What was done
+Two small fixes:
+
+1. **CSP update** (`public/_headers`): Added second script hash (`sha256-ADYqsdicbM/...`) and `'unsafe-eval'` to `script-src` to support updated prerender inline script.
+2. **Error toast improvement** (`GenerateForm.tsx`): Default generation error toast now shows the actual error message from the API response instead of generic "Something went wrong", with request ID appended as reference.
+
+### Files modified (2)
+- `public/_headers` — updated Content-Security-Policy script-src
+- `src/components/cards/GenerateForm.tsx` — error toast shows `error.message` instead of generic text
+
+### Quality gates
+- TypeScript strict: 0 errors
+- ESLint: 0 warnings
+- Vitest: 163/163 tests pass
