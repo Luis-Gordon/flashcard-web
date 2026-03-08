@@ -861,3 +861,18 @@ Fixed the Generate page not showing the review panel when all cards were rejecte
 - TypeScript strict: 0 errors
 - ESLint: 0 warnings
 - Vitest: 167/167 tests pass (4 new, 6 removed from pure-logic approach)
+
+## Session 28 — 2026-03-08 — Backlog Cleanup: Remove Completed Items
+
+### What was done
+Cleaned up `docs/backlog.md` — removed 7 items that were already implemented across Sessions 1–27 but never marked complete. Removed the "Usage state location" design decision (resolved via USAGE_CHANGED_EVENT).
+
+### Items removed (completed)
+- Phase 1: Error sanitization (self-marked completed)
+- Phase 2: User guidance field, Rejection visibility
+- Phase 4: Stripe Checkout, Usage display with overage, Usage counter refresh (entire section removed)
+- Phase 5: Dark mode, GDPR data export and account deletion
+- Design Decisions: Usage state location
+
+### Files modified (1)
+- `docs/backlog.md` — removed 7 completed items + 1 resolved design decision
