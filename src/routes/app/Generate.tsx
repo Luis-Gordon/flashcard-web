@@ -24,7 +24,9 @@ export default function Generate() {
 
   // Track whether to show the form or review panel
   // After generation completes, auto-switch to review
-  const hasResults = pendingCards.length > 0 && lastGenerateResponse !== null;
+  const hasResults =
+    (pendingCards.length > 0 || rejectedCards.length > 0 || unsuitableContent.length > 0)
+    && lastGenerateResponse !== null;
   const prevHasResults = useRef(hasResults);
   const [forceForm, setForceForm] = useState(false);
 

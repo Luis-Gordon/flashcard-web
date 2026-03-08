@@ -835,3 +835,29 @@ Added directive mode toggle to the card generation form, allowing users to descr
 - TypeScript strict: 0 errors
 - ESLint: 0 warnings
 - Vitest: 163/163 tests pass
+
+## Session 27 — 2026-03-08 — Fix Review Panel Silent Failure for Rejected/Unsuitable Cards
+
+### What was done
+Fixed the Generate page not showing the review panel when all cards were rejected or flagged as unsuitable. This was the web-side half of the directive mode silent failure bug — the backend fix (Session 60) makes validators directive-aware, while this fix ensures the user always sees feedback after generation.
+
+1. **hasResults gate** (`src/routes/app/Generate.tsx`): Changed from `pendingCards.length > 0 && lastGenerateResponse !== null` to include `rejectedCards` and `unsuitableContent`:
+   ```typescript
+   const hasResults =
+     (pendingCards.length > 0 || rejectedCards.length > 0 || unsuitableContent.length > 0)
+     && lastGenerateResponse !== null;
+   ```
+2. **Component tests** (`tests/unit/generate-has-results.test.tsx`): New file with 4 tests. Renders `Generate.tsx` with mocked `useCards` hook and stubbed child components (`CardReview`, `GenerateForm`, `UpgradeModal`). Verifies CardReview renders for rejected-only and unsuitable-only responses, and GenerateForm renders when all arrays are empty.
+
+### Key decisions
+- Component-level test (renders actual `Generate.tsx`) rather than pure-logic extraction — tests real rendering behavior
+- `lastGenerateResponse !== null` guard preserved — prevents showing stale results from previous sessions
+
+### Files modified (2)
+- `src/routes/app/Generate.tsx` — hasResults includes rejectedCards + unsuitableContent
+- `tests/unit/generate-has-results.test.tsx` — 4 new component tests (new file)
+
+### Quality gates
+- TypeScript strict: 0 errors
+- ESLint: 0 warnings
+- Vitest: 167/167 tests pass (4 new, 6 removed from pure-logic approach)
