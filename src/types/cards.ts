@@ -96,7 +96,7 @@ export interface UnsuitableContent {
 /** Request body for POST /cards/generate */
 export interface GenerateRequest {
   content: string;
-  content_type: "text" | "url" | "pdf";
+  content_type: "text" | "url" | "pdf" | "prompt";
   domain: CardDomain;
   options: {
     max_cards: number;

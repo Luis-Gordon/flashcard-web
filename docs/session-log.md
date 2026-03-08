@@ -809,3 +809,29 @@ Fixed card generation failure and React controlled/uncontrolled Select warning.
 - TypeScript strict: 0 errors
 - ESLint: 0 warnings
 - Vitest: 163/163 tests pass
+
+## Session 26 — 2026-03-08 — Directive Mode UI
+
+### What was done
+Added directive mode toggle to the card generation form, allowing users to describe what flashcards they want instead of pasting source content.
+
+1. **Form validation** (`src/lib/validation/cards.ts`): Added `contentType` field (`"text" | "prompt"`). Min 10 chars enforced for both types via `.superRefine()` with distinct error messages.
+2. **Types** (`src/types/cards.ts`): Added `'prompt'` to `GenerateRequest.content_type` union.
+3. **Store** (`src/stores/cards.ts`): `generateCards` accepts `contentType` param, passes `content_type` to API. Simplified `user_guidance` guard — relies on form already setting it to `undefined` in directive mode.
+4. **GenerateForm** (`src/components/cards/GenerateForm.tsx`): Added ToggleGroup (Source Material / Directive). Conditional label, description, placeholder, textarea height. Focus section hidden in directive mode. Passes `contentType` to store on submit.
+
+### Key decisions
+- `contentType` is a required field (no `.default()`) to avoid React Hook Form + Zod 4 type inference issues
+- Focus section (highlights + guidance) hidden entirely in directive mode — the directive IS the guidance
+- Min 10 chars for both modes (matches backend)
+
+### Files modified (4)
+- `src/lib/validation/cards.ts` — contentType field + superRefine
+- `src/types/cards.ts` — prompt in content_type union
+- `src/stores/cards.ts` — contentType param + simplified user_guidance
+- `src/components/cards/GenerateForm.tsx` — ToggleGroup + conditional UI
+
+### Quality gates
+- TypeScript strict: 0 errors
+- ESLint: 0 warnings
+- Vitest: 163/163 tests pass

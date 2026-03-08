@@ -103,6 +103,7 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
     resolver: zodResolver(generateFormSchema),
     defaultValues: {
       content: "",
+      contentType: "text" as const,
       domain: undefined,
       hookKey: undefined,
       cardStyle: "mixed",
@@ -114,6 +115,8 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
   const selectedDomain = watch("domain");
   const maxCards = watch("maxCards");
   const contentValue = watch("content");
+  const contentType = watch("contentType");
+  const isDirective = contentType === "prompt";
 
   // Focus state (not part of react-hook-form)
   const [highlights, setHighlights] = useState<string[]>([]);
@@ -230,9 +233,11 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
   }, []);
 
   const onSubmit = async (values: GenerateFormValues) => {
-    // Derive userGuidance from highlights + freeText
-    const serialized = highlights.length ? `Focus on: ${highlights.join("; ")}.` : "";
-    const userGuidance = [serialized, freeText.trim()].filter(Boolean).join(" ").slice(0, MAX_GUIDANCE_LENGTH) || undefined;
+    const isDir = values.contentType === "prompt";
+
+    // Derive userGuidance from highlights + freeText (skip in directive mode)
+    const serialized = !isDir && highlights.length ? `Focus on: ${highlights.join("; ")}.` : "";
+    const userGuidance = isDir ? undefined : ([serialized, freeText.trim()].filter(Boolean).join(" ").slice(0, MAX_GUIDANCE_LENGTH) || undefined);
 
     // Language fields: pass only the relevant one for the current domain
     const srcLang = values.domain === "lang" ? sourceLanguage.trim() || undefined : undefined;
@@ -249,6 +254,7 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
         userGuidance,
         sourceLanguage: srcLang,
         outputLanguage: outLang,
+        contentType: values.contentType,
       });
     } catch (error) {
       if (error instanceof ApiError) {
@@ -291,18 +297,48 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* Content type toggle */}
+      <div className="space-y-2">
+        <Label>Input mode</Label>
+        <Controller
+          name="contentType"
+          control={control}
+          render={({ field }) => (
+            <ToggleGroup
+              type="single"
+              value={field.value}
+              onValueChange={(val) => {
+                if (val) field.onChange(val);
+              }}
+              className="justify-start"
+            >
+              <ToggleGroupItem value="text" className="text-xs">
+                Source Material
+              </ToggleGroupItem>
+              <ToggleGroupItem value="prompt" className="text-xs">
+                Directive
+              </ToggleGroupItem>
+            </ToggleGroup>
+          )}
+        />
+      </div>
+
       {/* Content */}
       <div className="space-y-2">
         <Label htmlFor="content">
-          Content
+          {isDirective ? "Directive" : "Content"}
           <span className="ml-1 text-xs font-normal text-muted-foreground">
-            Paste text to generate flashcards from
+            {isDirective
+              ? "Describe what flashcards you want"
+              : "Paste text to generate flashcards from"}
           </span>
         </Label>
         <Textarea
           id="content"
-          placeholder="Paste article text, lecture notes, textbook excerpts..."
-          className="min-h-[160px] resize-y"
+          placeholder={isDirective
+            ? "e.g., Japanese directions vocabulary, WWII key battles, Python list comprehension patterns..."
+            : "Paste article text, lecture notes, textbook excerpts..."}
+          className={isDirective ? "min-h-[80px] resize-y" : "min-h-[160px] resize-y"}
           {...register("content")}
         />
         {errors.content && (
@@ -310,8 +346,8 @@ export function GenerateForm({ onUsageExceeded }: GenerateFormProps) {
         )}
       </div>
 
-      {/* Focus section — highlight + guidance */}
-      {contentValue.length >= 10 && (
+      {/* Focus section — highlight + guidance (hidden in directive mode) */}
+      {!isDirective && contentValue.length >= 10 && (
         <div className="space-y-3">
           <Label>
             Focus

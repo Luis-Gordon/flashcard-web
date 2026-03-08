@@ -49,6 +49,7 @@ interface CardState {
     userGuidance?: string;
     sourceLanguage?: string;
     outputLanguage?: string;
+    contentType?: "text" | "url" | "pdf" | "prompt";
   }) => Promise<void>;
   clearPendingCards: () => void;
   removePendingCard: (id: string) => void;
@@ -84,13 +85,13 @@ export const useCardStore = create<CardState>((set, get) => ({
   librarySelectedIds: new Set<string>(),
   exportCards: [],
 
-  generateCards: async ({ content, domain, cardStyle, difficulty, maxCards, hookKey, userGuidance, sourceLanguage, outputLanguage }) => {
+  generateCards: async ({ content, domain, cardStyle, difficulty, maxCards, hookKey, userGuidance, sourceLanguage, outputLanguage, contentType }) => {
     set({ isGenerating: true, generateError: null });
 
     try {
       const response = await api.generateCards({
         content,
-        content_type: "text",
+        content_type: contentType ?? "text",
         domain,
         options: {
           max_cards: maxCards,
