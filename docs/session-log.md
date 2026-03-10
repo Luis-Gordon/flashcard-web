@@ -876,3 +876,22 @@ Cleaned up `docs/backlog.md` — removed 7 items that were already implemented a
 
 ### Files modified (1)
 - `docs/backlog.md` — removed 7 completed items + 1 resolved design decision
+
+## Session 29 — 2026-03-09 — Tier 1 Quick Wins: Card Count Messaging + Notes Field
+
+### What was done
+Implemented two remaining Tier 1 backlog items:
+
+1. **Card count expectations**: Added `lastMaxCards` field to cards Zustand store, set atomically on successful generation, cleared on discard. `CardReview` summary bar now shows contextual messaging: "Generated X of Y (Z filtered by quality checks)" when rejections occur, "Generated X of Y cards" otherwise, with fallback for null.
+
+2. **CardEditor notes field in review**: Added `showNotes` prop to `<CardEditor>` in `CardReview`, so the notes textarea always appears during card review — users can add notes to any card, not just those that already have notes.
+
+### Files modified (4)
+- `src/stores/cards.ts` — added `lastMaxCards: number | null` state, set on generation success, cleared on discard
+- `src/components/cards/CardReview.tsx` — contextual count messaging in summary bar, `showNotes` on CardEditor
+- `src/lib/hooks/useCards.ts` — exposed `lastMaxCards` in `useCards()` selector
+
+### Quality gates
+- TypeScript strict: 0 errors
+- ESLint: 0 warnings
+- Vitest: 167/167 tests pass

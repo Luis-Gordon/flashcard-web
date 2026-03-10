@@ -10,6 +10,7 @@ export function useCards() {
     isGenerating: s.isGenerating,
     generateError: s.generateError,
     lastGenerateResponse: s.lastGenerateResponse,
+    lastMaxCards: s.lastMaxCards,
     selectedCardIds: s.selectedCardIds,
   })));
 }

@@ -22,6 +22,7 @@ interface CardState {
   isGenerating: boolean;
   generateError: string | null;
   lastGenerateResponse: GenerateResponse | null;
+  lastMaxCards: number | null;
 
   // Selection
   selectedCardIds: Set<string>;
@@ -77,6 +78,7 @@ export const useCardStore = create<CardState>((set, get) => ({
   isGenerating: false,
   generateError: null,
   lastGenerateResponse: null,
+  lastMaxCards: null,
   selectedCardIds: new Set<string>(),
   libraryCards: [],
   libraryPagination: { page: 1, limit: 20, total: 0, total_pages: 0 },
@@ -115,6 +117,7 @@ export const useCardStore = create<CardState>((set, get) => ({
         rejectedCards: response.rejected ?? [],
         unsuitableContent: response.unsuitable_content ?? [],
         lastGenerateResponse: { ...response, cards: cardsWithIds },
+        lastMaxCards: maxCards,
         isGenerating: false,
         selectedCardIds: new Set(cardsWithIds.map((c) => c.id)),
       });
@@ -137,6 +140,7 @@ export const useCardStore = create<CardState>((set, get) => ({
       rejectedCards: [],
       unsuitableContent: [],
       lastGenerateResponse: null,
+      lastMaxCards: null,
       selectedCardIds: new Set(),
       generateError: null,
     }),

@@ -1,6 +1,6 @@
 import { memo, useCallback, useState } from "react";
 import type { Card, EditableCard, RejectedCard, UnsuitableContent, GenerateResponse } from "@/types/cards";
-import { useCardActions } from "@/lib/hooks/useCards";
+import { useCardActions, useCards } from "@/lib/hooks/useCards";
 import { SanitizedHTML } from "@/components/cards/SanitizedHTML";
 import { CardEditor } from "@/components/cards/CardEditor";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +46,7 @@ const CardItem = memo(function CardItem({
   onCancelEdit,
 }: CardItemProps) {
   if (isEditing) {
-    return <CardEditor card={card} onSave={onSave} onCancel={onCancelEdit} />;
+    return <CardEditor card={card} showNotes onSave={onSave} onCancel={onCancelEdit} />;
   }
 
   return (
@@ -197,6 +197,7 @@ export function CardReview({
   onGenerateMore,
   onExportSelected,
 }: CardReviewProps) {
+  const { lastMaxCards } = useCards();
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const {
     removePendingCard,
@@ -237,7 +238,11 @@ export function CardReview({
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-green-600" />
           <span className="text-sm font-medium">
-            {response.usage.cards_generated} cards generated
+            {lastMaxCards !== null && response.usage.cards_rejected > 0
+              ? `Generated ${response.usage.cards_generated} of ${lastMaxCards} (${response.usage.cards_rejected} filtered by quality checks)`
+              : lastMaxCards !== null
+                ? `Generated ${response.usage.cards_generated} of ${lastMaxCards} cards`
+                : `${response.usage.cards_generated} cards generated`}
           </span>
         </div>
         {response.usage.cards_remaining !== null && (
