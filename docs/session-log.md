@@ -895,3 +895,25 @@ Implemented two remaining Tier 1 backlog items:
 - TypeScript strict: 0 errors
 - ESLint: 0 warnings
 - Vitest: 167/167 tests pass
+
+## Session 30 — 2026-03-11 — Safety Hardening & File Tracking
+
+### Summary
+No code changes. Added git safety constraints to CLAUDE.md. Fixed `.gitignore` to track AI CLI config files (`GEMINI.md`, `.claude/`, `.gemini/`) while still ignoring `settings.local.json`. Tracked `GEMINI.md` and `.claude/review-output/` verdict files.
+
+This session was part of a cross-project recovery effort after Claude destructively deleted untracked files in the anki sub-project using `git clean -fd`. Safety rules were added to all CLAUDE.md files to prevent recurrence.
+
+### Changes
+1. **CLAUDE.md** — Added 2 NEVER constraints: never `git clean`, never make code changes during `/review`
+2. **`.gitignore`** — Changed from ignoring `.claude/` to only ignoring `settings.local.json`
+3. **`GEMINI.md`** — Now tracked (was gitignored)
+4. **`.claude/review-output/`** — codex-verdict.json and gemini-verdict.json now tracked
+
+### Files modified (4)
+- `CLAUDE.md`
+- `.gitignore`
+- `GEMINI.md` (newly tracked)
+- `.claude/review-output/*.json` (newly tracked)
+
+### Quality gates
+No code changes — gates not required
