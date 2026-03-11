@@ -29,6 +29,8 @@ React SPA for card generation, library management, .apkg export, and billing. Vi
 - **NEVER** store auth tokens in localStorage — use Supabase session management
 - **NEVER** generate .apkg server-side — client-side only (sql.js WASM + JSZip)
 - **NEVER** add server-side state that duplicates the backend
+- **NEVER** use `git clean` — it permanently deletes untracked files (audit docs, plans, configs). Use `git checkout -- .` to revert tracked file changes only.
+- **NEVER** make code changes during a `/review` — reviews are read-only; report findings and stop.
 - **ALWAYS** include `product_source: 'web_app'` in every API request body
 - **ALWAYS** sanitize user-provided content before rendering (XSS prevention)
 - **ALWAYS** auth guard on all `/app/*` routes — redirect to login if unauthenticated
