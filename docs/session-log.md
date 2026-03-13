@@ -917,3 +917,28 @@ This session was part of a cross-project recovery effort after Claude destructiv
 
 ### Quality gates
 No code changes — gates not required
+
+## Session 31 — 2026-03-13 — Card Enhancement Feature
+
+### Summary
+Implemented card enhancement functionality for the web app. Users can now select library cards, click "Enhance", choose a domain and enhancement options (add context, add tags, fix formatting), and enhance them via the existing backend `/cards/enhance` endpoint. Results show success/failure/skipped counts.
+
+### Changes
+1. **`src/types/cards.ts`** — Added 8 enhancement types (`EnhanceInputCard`, `EnhancementOptions`, `EnhanceRequest`, `SkippedEnhancement`, `EnhancedCard`, `FailedEnhancedCard`, `EnhanceUsage`, `EnhanceResponse`)
+2. **`src/lib/api.ts`** — Added `enhanceCards()` API function with 120s timeout
+3. **`src/stores/cards.ts`** — Added `isEnhancing`, `enhanceError` state and `enhanceLibraryCards` action (builds input, calls API, merges results, dispatches usage event)
+4. **`src/lib/hooks/useCards.ts`** — Added `useEnhance()` hook with `useShallow`
+5. **`src/components/cards/EnhanceModal.tsx`** — New 3-step modal (configure → enhancing → results) with domain selector, enhancement checkboxes, error handling for USAGE_EXCEEDED/RATE_LIMITED
+6. **`src/routes/app/Library.tsx`** — Added Enhance button to bulk actions bar, renders EnhanceModal
+7. **`tests/unit/enhance-store.test.ts`** — 7 tests: store updates, isEnhancing transitions, failed cards untouched, usage event, error handling, request shape, updated_at
+
+### Key decisions
+- TTS and image enhancements hardcoded to `false` (web app only supports text enhancements for now)
+- Domain pre-selected when all selected cards share the same domain
+- Modal non-dismissible during enhancement to prevent accidental cancel
+- No backend deploy needed — `/cards/enhance` already deployed
+
+### Quality gates
+- TypeScript strict: 0 errors
+- ESLint: 0 warnings
+- Vitest: 174/174 passing (167 existing + 7 new)

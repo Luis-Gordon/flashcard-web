@@ -7,6 +7,7 @@ import type {
   RejectedCard,
   UnsuitableContent,
   GenerateResponse,
+  EnhanceResponse,
   LibraryCard,
   CardFilters,
   UpdateCardRequest,
@@ -35,6 +36,10 @@ interface CardState {
 
   // Library selection
   librarySelectedIds: Set<string>;
+
+  // Enhancement state
+  isEnhancing: boolean;
+  enhanceError: string | null;
 
   // Export transfer
   exportCards: (LibraryCard | Card)[];
@@ -67,6 +72,11 @@ interface CardState {
   deselectAllLibraryCards: () => void;
   removeLibraryCardLocally: (id: string) => { card: LibraryCard; index: number } | null;
   restoreLibraryCard: (card: LibraryCard, index: number) => void;
+  enhanceLibraryCards: (params: {
+    cardIds: string[];
+    domain: CardDomain;
+    enhancements: { add_context: boolean; add_tags: boolean; fix_formatting: boolean };
+  }) => Promise<EnhanceResponse>;
   setExportCards: (cards: (LibraryCard | Card)[]) => void;
   clearExportCards: () => void;
 }
@@ -85,6 +95,8 @@ export const useCardStore = create<CardState>((set, get) => ({
   isLoadingLibrary: false,
   libraryError: null,
   librarySelectedIds: new Set<string>(),
+  isEnhancing: false,
+  enhanceError: null,
   exportCards: [],
 
   generateCards: async ({ content, domain, cardStyle, difficulty, maxCards, hookKey, userGuidance, sourceLanguage, outputLanguage, contentType }) => {
@@ -306,6 +318,64 @@ export const useCardStore = create<CardState>((set, get) => ({
         },
       };
     });
+  },
+
+  enhanceLibraryCards: async ({ cardIds, domain, enhancements }) => {
+    set({ isEnhancing: true, enhanceError: null });
+
+    try {
+      const { libraryCards } = get();
+      const cards = libraryCards
+        .filter((c) => cardIds.includes(c.id))
+        .map((c) => ({
+          id: c.id,
+          front: c.front,
+          back: c.back,
+          card_type: c.card_type,
+          existing_tags: c.tags,
+          existing_notes: c.notes,
+        }));
+
+      const response = await api.enhanceCards({
+        cards,
+        domain,
+        enhancements: {
+          ...enhancements,
+          add_tts: false,
+          add_images: false,
+        },
+      });
+
+      // Merge enhanced cards into library
+      const enhancedMap = new Map(
+        response.enhanced_cards.map((ec) => [ec.id, ec]),
+      );
+      set((state) => ({
+        libraryCards: state.libraryCards.map((c) => {
+          const enhanced = enhancedMap.get(c.id);
+          if (!enhanced) return c;
+          return {
+            ...c,
+            front: enhanced.front,
+            back: enhanced.back,
+            tags: enhanced.tags,
+            notes: enhanced.notes,
+            updated_at: new Date().toISOString(),
+          };
+        }),
+        isEnhancing: false,
+      }));
+
+      window.dispatchEvent(new Event(USAGE_CHANGED_EVENT));
+      return response;
+    } catch (error) {
+      const message =
+        error instanceof api.ApiError
+          ? error.message
+          : "An unexpected error occurred";
+      set({ isEnhancing: false, enhanceError: message });
+      throw error;
+    }
   },
 
   setExportCards: (cards) => set({ exportCards: cards }),

@@ -56,6 +56,14 @@ export function useLibraryUndoDelete() {
   })));
 }
 
+export function useEnhance() {
+  return useCardStore(useShallow((s) => ({
+    isEnhancing: s.isEnhancing,
+    enhanceError: s.enhanceError,
+    enhanceLibraryCards: s.enhanceLibraryCards,
+  })));
+}
+
 export function useExportCards() {
   return useCardStore(useShallow((s) => ({
     exportCards: s.exportCards,

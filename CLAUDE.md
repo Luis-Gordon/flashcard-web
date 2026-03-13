@@ -2,8 +2,8 @@
 React SPA for card generation, library management, .apkg export, and billing. Vite + TypeScript + Cloudflare Workers.
 
 ## Current Status
-- **Phase**: All phases complete. Production-ready. Dark mode, 404 page, settings, billing, export, library with filters/undo, keyboard shortcuts, error boundary, CSP hardened, staging deployed.
-- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (163/163 tests), build succeeds.
+- **Phase**: All phases complete. Production-ready. Dark mode, 404 page, settings, billing, export, library with filters/undo, card enhancement, keyboard shortcuts, error boundary, CSP hardened, staging deployed.
+- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (174/174 tests), build succeeds.
 
 ## Next Session Tasks
 1. Production deployment prep (production env vars, CSP production URL)

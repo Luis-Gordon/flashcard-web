@@ -209,3 +209,69 @@ export interface UpdateLanguageResponse {
   request_id: string;
   user_language: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Card Enhancement
+// ---------------------------------------------------------------------------
+
+export interface EnhanceInputCard {
+  id: string;
+  front: string;
+  back: string;
+  card_type: CardType;
+  existing_tags: string[];
+  existing_notes: string;
+}
+
+export interface EnhancementOptions {
+  add_tts: boolean;
+  add_context: boolean;
+  add_tags: boolean;
+  fix_formatting: boolean;
+  add_images: boolean;
+}
+
+export interface EnhanceRequest {
+  cards: EnhanceInputCard[];
+  domain: CardDomain;
+  enhancements: EnhancementOptions;
+}
+
+export interface SkippedEnhancement {
+  type: "add_context" | "add_tags" | "fix_formatting";
+  reason: string;
+}
+
+export interface EnhancedCard {
+  id: string;
+  front: string;
+  back: string;
+  tags: string[];
+  notes: string;
+  skipped_enhancements: SkippedEnhancement[];
+  tts_front_url: string | null;
+  tts_back_url: string | null;
+  tts_answer_url: string | null;
+  tts_example_url: string | null;
+  image_url: string | null;
+  image_attribution: string | null;
+  image_search_query: string | null;
+}
+
+export interface FailedEnhancedCard {
+  id: string;
+  error: string;
+}
+
+export interface EnhanceUsage {
+  cards_enhanced: number;
+  tts_characters: number;
+  cost_cents: number;
+}
+
+export interface EnhanceResponse {
+  request_id: string;
+  enhanced_cards: EnhancedCard[];
+  failed_cards: FailedEnhancedCard[];
+  usage: EnhanceUsage;
+}

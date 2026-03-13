@@ -2,6 +2,8 @@ import { supabase } from "@/lib/supabase";
 import type {
   GenerateRequest,
   GenerateResponse,
+  EnhanceRequest,
+  EnhanceResponse,
   LibraryResponse,
   CardFilters,
   UsageResponse,
@@ -221,6 +223,18 @@ export function generateCards(request: GenerateRequest): Promise<GenerateRespons
     method: "POST",
     body: request as unknown as Record<string, unknown>,
     timeout: 90_000,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Card enhancement
+// ---------------------------------------------------------------------------
+
+export function enhanceCards(request: EnhanceRequest): Promise<EnhanceResponse> {
+  return apiRequest<EnhanceResponse>("/cards/enhance", {
+    method: "POST",
+    body: request as unknown as Record<string, unknown>,
+    timeout: 120_000,
   });
 }
 

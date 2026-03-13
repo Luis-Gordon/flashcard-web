@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useLibrary, useLibrarySelection, useLibraryUndoDelete, useExportCards } from "@/lib/hooks/useCards";
+import { EnhanceModal } from "@/components/cards/EnhanceModal";
 import { useSettingsStore } from "@/stores/settings";
 import * as api from "@/lib/api";
 import type { CardFilters, LibraryCard, UpdateCardRequest } from "@/types/cards";
@@ -70,6 +71,7 @@ export default function Library() {
 
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [currentFilters, setCurrentFilters] = useState<CardFilters>(DEFAULT_FILTERS);
+  const [enhanceModalOpen, setEnhanceModalOpen] = useState(false);
 
   const handleToggleSelect = useCallback((id: string) => {
     toggleLibrarySelection(id);
@@ -308,6 +310,10 @@ export default function Library() {
                 <Download className="h-3.5 w-3.5" />
                 Export {librarySelectedIds.size}
               </Button>
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEnhanceModalOpen(true)}>
+                <Sparkles className="h-3.5 w-3.5" />
+                Enhance {librarySelectedIds.size}
+              </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm" className="gap-1.5">
@@ -460,6 +466,12 @@ export default function Library() {
       {isLoadingLibrary && libraryCards.length > 0 && (
         <div className="mt-4 text-center text-sm text-muted-foreground">Loading...</div>
       )}
+
+      <EnhanceModal
+        open={enhanceModalOpen}
+        onOpenChange={setEnhanceModalOpen}
+        selectedCards={libraryCards.filter((c) => librarySelectedIds.has(c.id))}
+      />
     </div>
   );
 }
