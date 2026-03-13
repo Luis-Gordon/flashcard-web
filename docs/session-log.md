@@ -942,3 +942,15 @@ Implemented card enhancement functionality for the web app. Users can now select
 - TypeScript strict: 0 errors
 - ESLint: 0 warnings
 - Vitest: 174/174 passing (167 existing + 7 new)
+
+## Session 32 — 2026-03-13 — Deploy Sessions 29-31 to Staging + Production
+
+### Summary
+Deployment-only session. No code changes. Deployed all accumulated changes from Sessions 29-31 (card count messaging, notes field, card enhancement feature) to both staging and production. First-ever production deployment of the web app.
+
+### Deployments
+- **Staging**: Version `67299ed4`
+- **Production**: Version `68e5bd60` — first production deploy
+
+### Quality gates
+17 files, 174 tests (unchanged)

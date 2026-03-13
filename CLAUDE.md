@@ -6,7 +6,8 @@ React SPA for card generation, library management, .apkg export, and billing. Vi
 - **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (174/174 tests), build succeeds.
 
 ## Next Session Tasks
-1. Production deployment prep (production env vars, CSP production URL)
+1. Supabase migration for directive mode (backend task, blocks usage tracking)
+2. Mobile responsive pass
 
 ## CRITICAL Constraints
 - **NEVER** handle credit card details — Stripe Checkout (redirect) only
