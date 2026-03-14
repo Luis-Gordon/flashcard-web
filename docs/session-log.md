@@ -954,3 +954,14 @@ Deployment-only session. No code changes. Deployed all accumulated changes from 
 
 ### Quality gates
 17 files, 174 tests (unchanged)
+
+## Session 33 — 2026-03-14 — Agent Tooling: Add react-zustand Navigational Skill
+
+### Summary
+Added a navigational skill file (`.claude/skills/react-zustand/SKILL.md`) pointing to architecture docs, CLAUDE.md, and shared rules. Covers genuine gaps: store file layout, API client wrapper details, and environment mode handling.
+
+### Files modified
+- `.claude/skills/react-zustand/SKILL.md` — **new** (22 lines)
+
+### Quality gates
+No source code changes — tooling config only
