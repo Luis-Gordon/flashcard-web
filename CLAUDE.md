@@ -1,13 +1,7 @@
 # Flashcard Tools Web App
 React SPA for card generation, library management, .apkg export, and billing. Vite + TypeScript + Cloudflare Workers.
 
-## Current Status
-- **Phase**: All phases complete. Production-ready. Dark mode, 404 page, settings, billing, export, library with filters/undo, card enhancement, keyboard shortcuts, error boundary, CSP hardened, staging deployed.
-- **Quality gates**: TypeScript strict (0 errors), ESLint (0 warnings), Vitest (174/174 tests), build succeeds.
-
-## Next Session Tasks
-1. Supabase migration for directive mode (backend task, blocks usage tracking)
-2. Mobile responsive pass
+See `docs/backlog.md` for planned work and `docs/session-log.md` for recent context.
 
 ## CRITICAL Constraints
 - **NEVER** handle credit card details — Stripe Checkout (redirect) only
@@ -55,7 +49,7 @@ npm run deploy:staging           # Build --mode staging + deploy
 5. **Deploy with correct mode**: Use `npm run deploy:staging` (not manual `build` + `deploy`)
 6. Append to `docs/session-log.md`
 7. Update `docs/architecture.md` if structure changed
-8. Update "Current Status" above
+8. Update `docs/backlog.md` — mark done items, add new items
 9. **Commit and push** — work is not complete until pushed
 
 ## Documentation
